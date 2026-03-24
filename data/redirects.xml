@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<redirects xmlns="http://exist-db.org/site/redirects">
+    <!-- Old Atomic blog URLs -->
+    <redirect pattern="/exist/apps/wiki/blogs/(.*)" target="/exist/apps/blog/$1" status="301"/>
+
+    <!-- Old fundocs URLs -->
+    <redirect pattern="/exist/apps/fundocs/(.*)" target="/exist/apps/docs/functions/$1" status="301"/>
+
+    <!-- Old demo-apps -->
+    <redirect pattern="/exist/apps/demo/(.*)" target="/exist/apps/notebooks/examples/$1" status="301"/>
+</redirects>

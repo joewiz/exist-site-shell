@@ -1,0 +1,28 @@
+[% extends "base-page.html" %]
+
+[% block title %]Login &#8212; [[ $site-name ]][% endblock %]
+
+[% block content %]
+<div class="login-page">
+    <h1>Login</h1>
+
+    [% if exists($login-error) %]
+    <div class="login-error" role="alert">
+        [[ $login-error ]]
+    </div>
+    [% endif %]
+
+    <form class="login-form" method="post" action="[[ $shell-base ]]/login">
+        <div class="form-field">
+            <label for="login-user">Username</label>
+            <input type="text" id="login-user" name="user" required="" autocomplete="username"/>
+        </div>
+        <div class="form-field">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" name="password" required="" autocomplete="current-password"/>
+        </div>
+        <input type="hidden" name="redirect" value="[[ request:get-parameter('redirect', '/') ]]"/>
+        <button type="submit">Login</button>
+    </form>
+</div>
+[% endblock %]

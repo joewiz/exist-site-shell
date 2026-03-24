@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<meta xmlns="http://exist-db.org/xquery/repo">
+    <description>Sitewide navigation shell for eXist-db applications.
+        Provides a base Jinks template with navigation, sitewide search,
+        login/logout, and URL redirect handling. Apps opt in by extending
+        the shell's base-page.html template.</description>
+    <author>eXist-db</author>
+    <website>https://github.com/eXist-db/exist-site-shell</website>
+    <status>beta</status>
+    <license>GNU Lesser General Public License, version 2.1</license>
+    <copyright>true</copyright>
+    <type>library</type>
+    <target>exist-site-shell</target>
+</meta>

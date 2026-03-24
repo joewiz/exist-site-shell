@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>[% block title %]eXist-db[% endblock %]</title>
+    <link rel="stylesheet" href="[[ $shell-base ]]/resources/css/site.css"/>
+    [% block head %][% endblock %]
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to content</a>
+
+    <header class="site-header">
+        <nav class="site-nav" aria-label="Main navigation">
+            <a href="/" class="site-logo">
+                <img src="[[ $site-logo ]]" alt="[[ $site-name ]]" height="32"/>
+            </a>
+
+            <ul class="site-menu">
+                [% for $app in $nav-apps %]
+                <li>
+                    <a href="[[ $app?url ]]"
+                       [% if $app?active %]class="active"[% endif %]>
+                        [[ $app?title ]]
+                    </a>
+                </li>
+                [% endfor %]
+            </ul>
+
+            <form class="site-search" action="[[ $shell-base ]]/search" method="get">
+                <label for="site-search-input" class="visually-hidden">Search</label>
+                <input type="search" id="site-search-input" name="q"
+                       placeholder="Search docs, functions, notebooks..."
+                       aria-label="Sitewide search"/>
+            </form>
+
+            <div class="site-user">
+                [% if $user != 'guest' %]
+                    <span>[[ $user ]]</span>
+                    <a href="[[ $shell-base ]]/logout">Logout</a>
+                [% else %]
+                    <a href="[[ $shell-base ]]/login">Login</a>
+                [% endif %]
+            </div>
+        </nav>
+    </header>
+
+    <main id="main-content">
+        [% block content %][% endblock %]
+    </main>
+
+    <footer class="site-footer">
+        <p>&copy; 2001&#8211;2026 The eXist-db Authors.
+           <a href="https://github.com/eXist-db/exist">Source</a> &#183;
+           <a href="https://exist-db.org">exist-db.org</a>
+        </p>
+    </footer>
+
+    [% block scripts %][% endblock %]
+</body>
+</html>
