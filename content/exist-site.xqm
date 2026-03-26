@@ -16,7 +16,7 @@ declare variable $config:installed-packages := repo:list();
 
 (: Resolve the shell's package root from the module load path.
  : system:get-module-load-path() returns the directory of this file,
- : which is content/modules/ — strip that suffix to get the package root. :)
+ : which is content/ — strip that suffix to get the package root. :)
 declare variable $config:app-root :=
     let $rawPath := system:get-module-load-path()
     let $modulePath :=
@@ -27,7 +27,7 @@ declare variable $config:app-root :=
         else
             $rawPath
     return
-        substring-before($modulePath, "/content/modules");
+        substring-before($modulePath, "/content");
 
 declare variable $config:shell-base :=
     request:get-context-path() || "/apps/exist-site-shell";
