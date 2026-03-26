@@ -3,7 +3,7 @@
  * Copyright (C) 2001-2026 The eXist-db Authors
  */
 import { src, dest, series, parallel, watch as gulpWatch } from "gulp";
-import { createClient, readOptionsFromEnv } from "@existdb/gulp-exist";
+import { createClient } from "@existdb/gulp-exist";
 import replace from "@existdb/gulp-replace-tmpl";
 import rename from "gulp-rename";
 import zip from "gulp-zip";
@@ -16,14 +16,30 @@ const { version, license, app } = packageJson;
 // template replacements: first value wins
 const replacements = [app, { version, license }];
 
-const defaultOptions = { basic_auth: { user: "admin", pass: "" }, secure: false };
-const connectionOptions = Object.assign(defaultOptions, readOptionsFromEnv());
+// read connection settings from .existdb.json (xst's native config format)
+function readExistDbJson() {
+  try {
+    const config = JSON.parse(readFileSync(".existdb.json", "utf-8"));
+    const server = config.servers?.localhost;
+    if (!server) return {};
+    const { port, hostname, protocol } = new URL(server.server);
+    return {
+      basic_auth: { user: server.user, pass: server.password },
+      host: hostname,
+      port,
+      protocol,
+      secure: protocol === "https:",
+    };
+  } catch {
+    return {};
+  }
+}
 
 let existClient;
 try {
-  existClient = createClient(connectionOptions);
+  existClient = createClient(readExistDbJson());
 } catch (e) {
-  // client creation may fail if server is not available; OK for build-only usage
+  // client creation may fail if .existdb.json is missing; OK for build-only usage
 }
 
 const packageFilename = `${app.abbrev}-${version}.xar`;

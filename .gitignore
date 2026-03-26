@@ -1,6 +1,5 @@
 .claude/
 *.xar
-.env
 .existdb.json
 node_modules/
 .build/
