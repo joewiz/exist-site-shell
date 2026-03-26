@@ -10,7 +10,7 @@ xquery version "3.1";
 
 import module namespace tmpl = "http://e-editiones.org/xquery/templates";
 import module namespace config = "http://exist-db.org/site/config"
-    at "config.xqm";
+    at "../content/modules/config.xqm";
 import module namespace nav = "http://exist-db.org/site/nav"
     at "nav.xqm";
 import module namespace search = "http://exist-db.org/site/search"

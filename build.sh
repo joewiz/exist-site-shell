@@ -16,6 +16,7 @@ zip -r "${PACKAGE}" \
     repo.xml \
     controller.xq \
     content/ \
+    modules/ \
     templates/ \
     resources/ \
     data/

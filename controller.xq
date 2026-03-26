@@ -18,7 +18,7 @@ declare variable $exist:prefix external;
 declare variable $exist:root external;
 
 import module namespace redirects = "http://exist-db.org/site/redirects"
-    at "content/modules/redirects.xqm";
+    at "modules/redirects.xqm";
 
 if ($exist:path = "" or $exist:path = "/") then
     <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
@@ -27,7 +27,7 @@ if ($exist:path = "" or $exist:path = "/") then
 
 else if ($exist:path = "/search") then
     <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
-        <forward url="{$exist:controller}/content/modules/view.xq">
+        <forward url="{$exist:controller}/modules/view.xq">
             <set-attribute name="template" value="templates/search-results.html"/>
         </forward>
     </dispatch>
@@ -47,14 +47,14 @@ else if ($exist:path = "/login") then
                     </dispatch>
             else
                 <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
-                    <forward url="{$exist:controller}/content/modules/view.xq">
+                    <forward url="{$exist:controller}/modules/view.xq">
                         <set-attribute name="template" value="templates/login.html"/>
                         <set-attribute name="login-error" value="Invalid username or password"/>
                     </forward>
                 </dispatch>
     else
         <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
-            <forward url="{$exist:controller}/content/modules/view.xq">
+            <forward url="{$exist:controller}/modules/view.xq">
                 <set-attribute name="template" value="templates/login.html"/>
             </forward>
         </dispatch>
@@ -82,7 +82,7 @@ else
             </dispatch>
         else
             <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
-                <forward url="{$exist:controller}/content/modules/view.xq">
+                <forward url="{$exist:controller}/modules/view.xq">
                     <set-attribute name="template" value="templates/error-404.html"/>
                 </forward>
             </dispatch>
