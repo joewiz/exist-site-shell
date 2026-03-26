@@ -34,7 +34,7 @@ declare function search:query($q as xs:string, $options as map(*)) as array(*) {
         order by ft:score($hit) descending
         return map {
             "title": ft:field($hit, "site-title", "xs:string"),
-            "snippet": kwic:summarize($hit, <config width="80"/>),
+            "snippet": string-join(kwic:summarize($hit, <config width="80"/>)//text(), ""),
             "app": ft:field($hit, "site-app", "xs:string"),
             "section": ft:field($hit, "site-section", "xs:string"),
             "score": ft:score($hit)

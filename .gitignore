@@ -2,3 +2,7 @@
 *.xar
 .env
 .existdb.json
+node_modules/
+.build/
+dist/
+package-lock.json
