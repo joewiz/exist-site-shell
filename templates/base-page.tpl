@@ -2,16 +2,16 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>[% block title %]eXist-db[% endblock %]</title>
+    <title>[[ $page-title ]]</title>
     <link rel="stylesheet" href="[[ $shell-base ]]/resources/css/site.css"/>
-    [% block head %][% endblock %]
+    [[ $extra-head ]]
 </head>
 <body>
     <a href="#main-content" class="skip-link">Skip to content</a>
 
     <header class="site-header">
         <nav class="site-nav" aria-label="Main navigation">
-            <a href="/" class="site-logo">
+            <a href="[[ $shell-base ]]/" class="site-logo">
                 <img src="[[ $site-logo ]]" alt="[[ $site-name ]]" height="32"/>
             </a>
 
@@ -44,16 +44,15 @@
     </header>
 
     <main id="main-content">
-        [% block content %][% endblock %]
+        [[ $page-content ]]
     </main>
 
     <footer class="site-footer">
-        <p>&#169; 2001&#8211;2026 The eXist-db Authors.
-           <a href="https://github.com/eXist-db/exist">Source</a> &#183;
+        <p>Copyright 2001-2026 The eXist-db Authors.
+           <a href="https://github.com/eXist-db/exist">Source</a> |
            <a href="https://exist-db.org">exist-db.org</a>
         </p>
     </footer>
 
-    [% block scripts %][% endblock %]
 </body>
 </html>

@@ -4,9 +4,12 @@ xquery version "3.1";
  : URL routing controller for the site shell.
  :
  : Handles:
- :   /search?q=...     - sitewide search results
+ :   /                  - landing page
+ :   /search?q=...      - sitewide search results
  :   /login             - login form (GET) / authenticate (POST)
  :   /logout            - logout and redirect to /
+ :   /apps              - app launcher
+ :   /about, /community, /press, /privacy - static Markdown pages
  :   /resources/*       - static assets (CSS, images)
  :   *                  - check redirect map, then 404
  :)
@@ -20,15 +23,35 @@ declare variable $exist:root external;
 import module namespace redirects = "http://exist-db.org/site/redirects"
     at "modules/redirects.xqm";
 
+(: Static Markdown pages :)
+declare variable $local:page-slugs := ("about", "community", "press", "privacy");
+
 if ($exist:path = "" or $exist:path = "/") then
     <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
-        <redirect url="/"/>
+        <forward url="{$exist:controller}/modules/view.xq">
+            <set-attribute name="template" value="templates/index.tpl"/>
+        </forward>
     </dispatch>
 
 else if ($exist:path = "/search") then
     <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
         <forward url="{$exist:controller}/modules/view.xq">
-            <set-attribute name="template" value="templates/search-results.html"/>
+            <set-attribute name="template" value="templates/search-results.tpl"/>
+        </forward>
+    </dispatch>
+
+else if ($exist:path = "/apps") then
+    <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
+        <forward url="{$exist:controller}/modules/view.xq">
+            <set-attribute name="template" value="templates/apps.tpl"/>
+        </forward>
+    </dispatch>
+
+else if (substring-after($exist:path, "/") = $local:page-slugs) then
+    <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
+        <forward url="{$exist:controller}/modules/view.xq">
+            <set-attribute name="template" value="templates/page.tpl"/>
+            <set-attribute name="page-slug" value="{substring-after($exist:path, '/')}"/>
         </forward>
     </dispatch>
 
@@ -48,14 +71,14 @@ else if ($exist:path = "/login") then
             else
                 <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
                     <forward url="{$exist:controller}/modules/view.xq">
-                        <set-attribute name="template" value="templates/login.html"/>
+                        <set-attribute name="template" value="templates/login.tpl"/>
                         <set-attribute name="login-error" value="Invalid username or password"/>
                     </forward>
                 </dispatch>
     else
         <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
             <forward url="{$exist:controller}/modules/view.xq">
-                <set-attribute name="template" value="templates/login.html"/>
+                <set-attribute name="template" value="templates/login.tpl"/>
             </forward>
         </dispatch>
 
@@ -83,6 +106,6 @@ else
         else
             <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
                 <forward url="{$exist:controller}/modules/view.xq">
-                    <set-attribute name="template" value="templates/error-404.html"/>
+                    <set-attribute name="template" value="templates/error-404.tpl"/>
                 </forward>
             </dispatch>

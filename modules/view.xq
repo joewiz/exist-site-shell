@@ -3,9 +3,13 @@ xquery version "3.1";
 (:~
  : Template view module.
  :
- : Reads a Jinks template file, builds the rendering context with
- : site config, navigation, search results, and user state, then
- : passes everything to tmpl:process().
+ : Two-pass rendering: first renders the content template, then
+ : wraps the result in the base-page shell template.
+ :
+ : This avoids the Jinks "extends" mechanism which has a context
+ : variable propagation bug in recent versions. Instead, view.xq
+ : renders the page-specific content template, then renders the
+ : base template with that content as a variable.
  :)
 
 import module namespace tmpl = "http://e-editiones.org/xquery/templates";
@@ -17,6 +21,14 @@ import module namespace search = "http://exist-db.org/site/search"
     at "search.xqm";
 import module namespace login = "http://exist-db.org/site/login"
     at "login.xqm";
+import module namespace pages = "http://exist-db.org/site/pages"
+    at "pages.xqm";
+import module namespace launcher = "http://exist-db.org/site/launcher"
+    at "launcher.xqm";
+import module namespace news = "http://exist-db.org/site/news"
+    at "news.xqm";
+import module namespace testimonials = "http://exist-db.org/site/testimonials"
+    at "testimonials.xqm";
 
 declare namespace output = "http://www.w3.org/2010/xslt-xquery-serialization";
 
@@ -26,17 +38,10 @@ declare option output:indent "no";
 
 (:~
  : Resolve template paths relative to the shell's app root.
- :
- : Also handles the "site:" prefix so that apps in other packages
- : can extend shell templates via [% extends "site:base-page.html" %].
- :
- : @param $relPath relative path to resolve
- : @return map with "path" and "content" keys, or empty sequence
  :)
 declare function local:resolver($relPath as xs:string) as map(*)? {
     let $effectivePath :=
         if (starts-with($relPath, "site:")) then
-            (: Cross-package reference — resolve within shell's templates/ :)
             $config:app-root || "/templates/" || substring-after($relPath, "site:")
         else
             $config:app-root || "/" || $relPath
@@ -57,12 +62,42 @@ declare function local:resolver($relPath as xs:string) as map(*)? {
             ()
 };
 
-(: Get template path from controller's set-attribute :)
-let $template-rel := request:get-attribute("template")
+(: Read controller attributes :)
+let $content-template := request:get-attribute("template")
+let $page-slug := request:get-attribute("page-slug")
 
-(: Read the template content :)
-let $resolved := local:resolver($template-rel)
-let $template := $resolved?content
+(: Render Markdown page if requested :)
+let $page :=
+    if ($page-slug) then
+        pages:render($page-slug)
+    else
+        map {}
+
+(: Determine page title :)
+let $page-title :=
+    if ($page?title) then $page?title || " —" || $config:site-name
+    else if ($content-template = "templates/index.tpl") then
+        "eXist-db —The Open Source Native XML Database"
+    else if ($content-template = "templates/search-results.tpl") then
+        "Search —" || $config:site-name
+    else if ($content-template = "templates/login.tpl") then
+        "Login —" || $config:site-name
+    else if ($content-template = "templates/apps.tpl") then
+        "Applications —" || $config:site-name
+    else if ($content-template = "templates/error-404.tpl") then
+        "Page Not Found —" || $config:site-name
+    else
+        $config:site-name
+
+(: Map template paths to content-only templates :)
+let $content-file := replace($content-template, "templates/([^.]+)\.tpl", "templates/$1-content.tpl")
+
+(: Extra <head> content for specific pages :)
+let $extra-head :=
+    if ($content-template = "templates/index.html") then
+        '<link rel="stylesheet" href="' || $config:shell-base || '/resources/css/landing.css"/>'
+    else
+        ""
 
 (: Build rendering context :)
 let $q := request:get-parameter("q", "")
@@ -78,14 +113,36 @@ let $context := map:merge((
                     "app": request:get-parameter("app", ())
                 })
             else
-                array {}
+                array {},
+        "page-title": $page-title,
+        "page-html": $page?html,
+        "extra-head": $extra-head,
+        "testimonials": testimonials:list(4),
+        "news-items": news:latest(3),
+        "launcher-apps": launcher:apps()
     }
 ))
 
-return
-    if (exists($template)) then
-        tmpl:process($template, $context, map {
+(: Pass 1: render the content template :)
+let $content-resolved := local:resolver($content-file)
+let $page-content :=
+    if (exists($content-resolved?content)) then
+        tmpl:process($content-resolved?content, $context, map {
             "resolver": local:resolver#1
         })
     else
-        <div>Template not found: {$template-rel}</div>
+        <div>Content template not found: {$content-file}</div>
+
+(: Pass 2: render base-page.html with $page-content injected :)
+let $base-resolved := local:resolver("templates/base-page.tpl")
+let $full-context := map:merge((
+    $context,
+    map { "page-content": $page-content }
+))
+return
+    if (exists($base-resolved?content)) then
+        tmpl:process($base-resolved?content, $full-context, map {
+            "resolver": local:resolver#1
+        })
+    else
+        <div>Base template not found</div>

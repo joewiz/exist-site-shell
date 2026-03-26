@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testimonials xmlns="http://exist-db.org/site/testimonials">
+    <testimonial>
+        <quote>We chose eXist because it allows us to use one technology for all our data needs. The result is a remarkably flexible and maintainable system.</quote>
+        <author>Joe Wicentowski</author>
+        <role>Historian, Office of the Historian</role>
+        <org>U.S. Department of State</org>
+    </testimonial>
+    <testimonial>
+        <quote>eXist-db is an amazing piece of technology that fulfills everything a developer could ask for.</quote>
+        <author>Andreas Jung</author>
+        <role>Lead Developer</role>
+        <org>zopyx.com / onkopedia.com</org>
+    </testimonial>
+    <testimonial>
+        <quote>We have used eXist in a large number of projects, including the award-winning Map of Early Modern London. eXist's native XML storage and XQuery support make it the ideal platform for TEI-based digital editions.</quote>
+        <author>Martin Holmes</author>
+        <role>Programmer</role>
+        <org>University of Victoria Humanities Computing and Media Centre</org>
+    </testimonial>
+    <testimonial>
+        <quote>eXist-db is the perfect platform for full stack XML web application development with XQuery.</quote>
+        <author>Stephane Sire</author>
+        <role>Founder</role>
+        <org>Oppidoc</org>
+    </testimonial>
+    <testimonial>
+        <quote>TBRC chose eXist-db for its combination of native XML storage, Lucene full-text indexing, and the ability to serve both data and applications. We manage over 10 million scanned pages and 11,000 Unicode Tibetan texts.</quote>
+        <author>Chris Tomlinson</author>
+        <role>Developer</role>
+        <org>Tibetan Buddhist Resource Center</org>
+    </testimonial>
+    <testimonial>
+        <quote>We eliminated 80 percent of our Microsoft codebase when we moved to eXist-db. XQuery 3.0 lets us manipulate our data in ways that would take hundreds of lines of C# code.</quote>
+        <author>Chris Misztur</author>
+        <role>CTO</role>
+        <org>Haptix Games</org>
+    </testimonial>
+    <testimonial>
+        <quote>eXist is a rock-solid database and application development platform. We depend on it for our end-to-end DITA XML content management and publishing system.</quote>
+        <author>Casey Jordan</author>
+        <role>Cofounder</role>
+        <org>easyDITA / Jorsek LLC</org>
+    </testimonial>
+    <testimonial>
+        <quote>eXist-db powers the Digital Dictionary of Surnames in Germany, serving 850,000 entries with fast full-text search.</quote>
+        <author>Franziska Horn</author>
+        <role>Researcher</role>
+        <org>Technische Universitat Darmstadt</org>
+    </testimonial>
+</testimonials>
