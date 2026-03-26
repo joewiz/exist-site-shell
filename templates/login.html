@@ -1,8 +1,13 @@
-[% extends "base-page.html" %]
+---json
+{
+    "templating": {
+        "extends": "templates/base-page.html"
+    }
+}
+---
+[% template title %]Login &#8212; [[ $site-name ]][% endtemplate %]
 
-[% block title %]Login &#8212; [[ $site-name ]][% endblock %]
-
-[% block content %]
+[% template content %]
 <div class="login-page">
     <h1>Login</h1>
 
@@ -21,8 +26,7 @@
             <label for="login-password">Password</label>
             <input type="password" id="login-password" name="password" required="" autocomplete="current-password"/>
         </div>
-        <input type="hidden" name="redirect" value="[[ request:get-parameter('redirect', '/') ]]"/>
         <button type="submit">Login</button>
     </form>
 </div>
-[% endblock %]
+[% endtemplate %]

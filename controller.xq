@@ -5,12 +5,11 @@ xquery version "3.1";
  :
  : Handles:
  :   /search?q=...     - sitewide search results
- :   /login             - login form
- :   /logout            - logout and redirect
+ :   /login             - login form (GET) / authenticate (POST)
+ :   /logout            - logout and redirect to /
+ :   /resources/*       - static assets (CSS, images)
  :   *                  - check redirect map, then 404
  :)
-
-declare namespace redirect = "http://exist-db.org/site/redirects";
 
 declare variable $exist:path external;
 declare variable $exist:resource external;
@@ -19,14 +18,18 @@ declare variable $exist:prefix external;
 declare variable $exist:root external;
 
 import module namespace redirects = "http://exist-db.org/site/redirects"
-    at "modules/redirects.xqm";
+    at "content/modules/redirects.xqm";
 
-if ($exist:path = "/search") then
+if ($exist:path = "" or $exist:path = "/") then
     <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
-        <forward url="{$exist:controller}/templates/search-results.html"/>
-        <view>
-            <forward url="{$exist:controller}/modules/view.xq"/>
-        </view>
+        <redirect url="/"/>
+    </dispatch>
+
+else if ($exist:path = "/search") then
+    <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
+        <forward url="{$exist:controller}/content/modules/view.xq">
+            <set-attribute name="template" value="templates/search-results.html"/>
+        </forward>
     </dispatch>
 
 else if ($exist:path = "/login") then
@@ -44,19 +47,16 @@ else if ($exist:path = "/login") then
                     </dispatch>
             else
                 <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
-                    <forward url="{$exist:controller}/templates/login.html"/>
-                    <view>
-                        <forward url="{$exist:controller}/modules/view.xq">
-                            <set-attribute name="login-error" value="Invalid username or password"/>
-                        </forward>
-                    </view>
+                    <forward url="{$exist:controller}/content/modules/view.xq">
+                        <set-attribute name="template" value="templates/login.html"/>
+                        <set-attribute name="login-error" value="Invalid username or password"/>
+                    </forward>
                 </dispatch>
     else
         <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
-            <forward url="{$exist:controller}/templates/login.html"/>
-            <view>
-                <forward url="{$exist:controller}/modules/view.xq"/>
-            </view>
+            <forward url="{$exist:controller}/content/modules/view.xq">
+                <set-attribute name="template" value="templates/login.html"/>
+            </forward>
         </dispatch>
 
 else if ($exist:path = "/logout") then
@@ -82,8 +82,7 @@ else
             </dispatch>
         else
             <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
-                <forward url="{$exist:controller}/templates/error-404.html"/>
-                <view>
-                    <forward url="{$exist:controller}/modules/view.xq"/>
-                </view>
+                <forward url="{$exist:controller}/content/modules/view.xq">
+                    <set-attribute name="template" value="templates/error-404.html"/>
+                </forward>
             </dispatch>

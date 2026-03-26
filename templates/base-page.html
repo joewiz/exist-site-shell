@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8"/>
@@ -17,13 +16,12 @@
             </a>
 
             <ul class="site-menu">
-                [% for $app in $nav-apps %]
-                <li>
-                    <a href="[[ $app?url ]]"
-                       [% if $app?active %]class="active"[% endif %]>
-                        [[ $app?title ]]
-                    </a>
-                </li>
+                [% for $app in $nav-apps?* %]
+                [% if $app?active %]
+                <li><a href="[[ $app?url ]]" class="active">[[ $app?title ]]</a></li>
+                [% else %]
+                <li><a href="[[ $app?url ]]">[[ $app?title ]]</a></li>
+                [% endif %]
                 [% endfor %]
             </ul>
 
@@ -50,7 +48,7 @@
     </main>
 
     <footer class="site-footer">
-        <p>&copy; 2001&#8211;2026 The eXist-db Authors.
+        <p>&#169; 2001&#8211;2026 The eXist-db Authors.
            <a href="https://github.com/eXist-db/exist">Source</a> &#183;
            <a href="https://exist-db.org">exist-db.org</a>
         </p>

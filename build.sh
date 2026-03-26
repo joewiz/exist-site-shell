@@ -14,6 +14,7 @@ rm -f "${PACKAGE}"
 zip -r "${PACKAGE}" \
     expath-pkg.xml \
     repo.xml \
+    controller.xq \
     content/ \
     templates/ \
     resources/ \
