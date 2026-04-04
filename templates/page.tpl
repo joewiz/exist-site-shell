@@ -1,11 +1,11 @@
 ---json
 {
     "templating": {
-        "extends": "templates/base-page.html"
+        "extends": "templates/base-page.tpl"
     }
 }
 ---
-[% template title %][[ $page-title ]] &#8212; [[ $site-name ]][% endtemplate %]
+[% template title %][[ $page-title ]] -- [[ $site-name ]][% endtemplate %]
 
 [% template content %]
 <article class="page-content">

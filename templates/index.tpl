@@ -1,11 +1,11 @@
 ---json
 {
     "templating": {
-        "extends": "templates/base-page.html"
+        "extends": "templates/base-page.tpl"
     }
 }
 ---
-[% template title %]eXist-db &#8212; The Open Source Native XML Database[% endtemplate %]
+[% template title %]eXist-db -- The Open Source Native XML Database[% endtemplate %]
 
 [% template head %]
 <link rel="stylesheet" href="[[ $shell-base ]]/resources/css/landing.css"/>
@@ -16,7 +16,7 @@
 
     <section class="hero">
         <h1>The Open Source Native XML Database</h1>
-        <p class="hero-tagline">Store, query, and build applications &#8212; all with XML and XQuery.</p>
+        <p class="hero-tagline">Store, query, and build applications -- all with XML and XQuery.</p>
         <div class="hero-actions">
             <a href="https://github.com/eXist-db/exist/releases" class="btn btn-primary">Download eXist-db</a>
             <a href="[[ $shell-base ]]/about" class="btn btn-secondary">Learn More</a>
@@ -53,7 +53,7 @@
         </div>
     </section>
 
-    [% if array:size($testimonials) > 0 %]
+    [% if count($testimonials?*) > 0 %]
     <section class="testimonials">
         <h2>What People Say</h2>
         <div class="testimonial-list">
@@ -69,7 +69,7 @@
     </section>
     [% endif %]
 
-    [% if array:size($news-items) > 0 %]
+    [% if count($news-items?*) > 0 %]
     <section class="news">
         <h2>Latest News</h2>
         <ul class="news-list">

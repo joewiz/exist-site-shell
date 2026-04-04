@@ -1,11 +1,11 @@
 ---json
 {
     "templating": {
-        "extends": "templates/base-page.html"
+        "extends": "templates/base-page.tpl"
     }
 }
 ---
-[% template title %]Applications &#8212; [[ $site-name ]][% endtemplate %]
+[% template title %]Applications -- [[ $site-name ]][% endtemplate %]
 
 [% template content %]
 <div class="apps-page">

@@ -3,21 +3,26 @@ xquery version "3.1";
 (:~
  : Navigation module.
  :
- : Discovers installed eXist-db application packages and builds the
- : site navigation menu. Only apps of type "application" are shown.
+ : Reads the nav bar app list from data/nav-config.xml.
+ : Only apps listed there appear in the navigation — the shell
+ : owns the list, not individual apps.
  :)
 module namespace nav = "http://exist-db.org/site/nav";
 
-declare namespace expath = "http://expath.org/ns/pkg";
-declare namespace repo = "http://exist-db.org/xquery/repo";
+import module namespace config = "http://exist-db.org/site/config"
+    at "../content/exist-site.xqm";
+
+declare namespace n = "http://exist-db.org/site/nav";
 
 (:~
- : Return an array of maps describing installed application packages,
- : suitable for rendering in the navigation menu.
+ : Return an array of maps for the nav bar, in document order.
+ :
+ : Only apps listed in data/nav-config.xml are included.
+ : Apps that are listed but not installed are silently skipped.
  :
  : Each map contains:
- :   - title: the package title from expath-pkg.xml
- :   - abbrev: the package abbreviation
+ :   - title: display title (from nav-config.xml)
+ :   - abbrev: package abbreviation
  :   - url: the app's context path
  :   - active: true if the current request URI starts with the app's path
  :
@@ -26,31 +31,15 @@ declare namespace repo = "http://exist-db.org/xquery/repo";
 declare function nav:apps() as array(*) {
     let $context := request:get-context-path()
     let $current-uri := request:get-uri()
+    let $nav-config := doc($config:app-root || "/data/nav-config.xml")/n:nav-config
     return array {
-        for $uri in repo:list()
-        let $repo-meta :=
-            try {
-                let $raw := repo:get-resource($uri, "repo.xml")
-                return
-                    if (exists($raw)) then parse-xml(util:binary-to-string($raw))
-                    else ()
-            } catch * { () }
-        let $pkg-meta :=
-            try {
-                let $raw := repo:get-resource($uri, "expath-pkg.xml")
-                return
-                    if (exists($raw)) then parse-xml(util:binary-to-string($raw))
-                    else ()
-            } catch * { () }
-        where exists($repo-meta) and exists($pkg-meta)
-        let $type := $repo-meta//*:type/string()
-        where $type = "application"
-        let $abbrev := $pkg-meta/expath:package/@abbrev/string()
-        let $title := $pkg-meta/expath:package/expath:title/string()
+        for $entry in $nav-config/n:app
+        let $abbrev := $entry/@abbrev/string()
         let $app-path := $context || "/apps/" || $abbrev
-        order by lower-case($title)
+        (: only include if the app is actually installed :)
+        where xmldb:collection-available("/db/apps/" || $abbrev)
         return map {
-            "title": $title,
+            "title": $entry/@title/string(),
             "abbrev": $abbrev,
             "url": $app-path,
             "active": starts-with($current-uri, $app-path)

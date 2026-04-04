@@ -63,7 +63,7 @@ else if ($exist:path = "/login") then
         return
             if ($login) then
                 let $_ := session:set-attribute("user", $user)
-                let $redirect := request:get-parameter("redirect", "/")
+                let $redirect := request:get-parameter("redirect", request:get-context-path() || "/apps/exist-site-shell/")
                 return
                     <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
                         <redirect url="{$redirect}"/>
@@ -84,9 +84,10 @@ else if ($exist:path = "/login") then
 
 else if ($exist:path = "/logout") then
     let $_ := session:invalidate()
+    let $redirect := request:get-parameter("redirect", request:get-context-path() || "/apps/exist-site-shell/")
     return
         <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
-            <redirect url="/"/>
+            <redirect url="{$redirect}"/>
         </dispatch>
 
 else if (starts-with($exist:path, "/resources/")) then

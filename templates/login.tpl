@@ -1,11 +1,11 @@
 ---json
 {
     "templating": {
-        "extends": "templates/base-page.html"
+        "extends": "templates/base-page.tpl"
     }
 }
 ---
-[% template title %]Login &#8212; [[ $site-name ]][% endtemplate %]
+[% template title %]Login -- [[ $site-name ]][% endtemplate %]
 
 [% template content %]
 <div class="login-page">
@@ -24,7 +24,7 @@
         </div>
         <div class="form-field">
             <label for="login-password">Password</label>
-            <input type="password" id="login-password" name="password" required="" autocomplete="current-password"/>
+            <input type="password" id="login-password" name="password" autocomplete="current-password"/>
         </div>
         <button type="submit">Login</button>
     </form>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nav-config xmlns="http://exist-db.org/site/nav">
+    <app abbrev="dashboard" title="Dashboard"/>
+    <app abbrev="docs" title="Documentation"/>
+    <app abbrev="notebook" title="Notebook"/>
+    <app abbrev="blog" title="Blog"/>
+</nav-config>

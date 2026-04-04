@@ -1,11 +1,11 @@
 ---json
 {
     "templating": {
-        "extends": "templates/base-page.html"
+        "extends": "templates/base-page.tpl"
     }
 }
 ---
-[% template title %]Search &#8212; [[ $site-name ]][% endtemplate %]
+[% template title %]Search -- [[ $site-name ]][% endtemplate %]
 
 [% template content %]
 <div class="search-results-page">
@@ -20,22 +20,19 @@
 
     [% if $q != '' %]
     <p class="search-summary">
-        Results for &#8220;<strong>[[ $q ]]</strong>&#8221;
-        ([[ array:size($search-results) ]] found)
+        Results for "<strong>[[ $q ]]</strong>"
+        ([[ count($search-results?*) ]] found)
     </p>
 
-    [% if array:size($search-results) > 0 %]
+    [% if count($search-results?*) > 0 %]
     <ol class="search-results">
         [% for $result in $search-results?* %]
         <li class="search-result">
-            <h2><a href="#">[[ $result?title ]]</a></h2>
+            <h2><a href="[[ $result?url ]]">[[ $result?title ]]</a></h2>
             <div class="search-snippet">[[ $result?snippet ]]</div>
             <div class="search-meta">
                 [% if exists($result?app) %]
                 <span class="search-app">[[ $result?app ]]</span>
-                [% endif %]
-                [% if exists($result?section) %]
-                <span class="search-section">[[ $result?section ]]</span>
                 [% endif %]
             </div>
         </li>

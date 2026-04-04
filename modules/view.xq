@@ -3,13 +3,9 @@ xquery version "3.1";
 (:~
  : Template view module.
  :
- : Two-pass rendering: first renders the content template, then
- : wraps the result in the base-page shell template.
- :
- : This avoids the Jinks "extends" mechanism which has a context
- : variable propagation bug in recent versions. Instead, view.xq
- : renders the page-specific content template, then renders the
- : base template with that content as a variable.
+ : Reads a Jinks template, builds the rendering context, and
+ : calls tmpl:process(). Each page template uses Jinks "extends"
+ : to inherit the base-page shell (nav, footer, etc.).
  :)
 
 import module namespace tmpl = "http://e-editiones.org/xquery/templates";
@@ -38,6 +34,7 @@ declare option output:indent "no";
 
 (:~
  : Resolve template paths relative to the shell's app root.
+ : Also handles the "site:" prefix for cross-package extends.
  :)
 declare function local:resolver($relPath as xs:string) as map(*)? {
     let $effectivePath :=
@@ -63,7 +60,7 @@ declare function local:resolver($relPath as xs:string) as map(*)? {
 };
 
 (: Read controller attributes :)
-let $content-template := request:get-attribute("template")
+let $template-rel := request:get-attribute("template")
 let $page-slug := request:get-attribute("page-slug")
 
 (: Render Markdown page if requested :)
@@ -72,32 +69,6 @@ let $page :=
         pages:render($page-slug)
     else
         map {}
-
-(: Determine page title :)
-let $page-title :=
-    if ($page?title) then $page?title || " —" || $config:site-name
-    else if ($content-template = "templates/index.tpl") then
-        "eXist-db —The Open Source Native XML Database"
-    else if ($content-template = "templates/search-results.tpl") then
-        "Search —" || $config:site-name
-    else if ($content-template = "templates/login.tpl") then
-        "Login —" || $config:site-name
-    else if ($content-template = "templates/apps.tpl") then
-        "Applications —" || $config:site-name
-    else if ($content-template = "templates/error-404.tpl") then
-        "Page Not Found —" || $config:site-name
-    else
-        $config:site-name
-
-(: Map template paths to content-only templates :)
-let $content-file := replace($content-template, "templates/([^.]+)\.tpl", "templates/$1-content.tpl")
-
-(: Extra <head> content for specific pages :)
-let $extra-head :=
-    if ($content-template = "templates/index.html") then
-        '<link rel="stylesheet" href="' || $config:shell-base || '/resources/css/landing.css"/>'
-    else
-        ""
 
 (: Build rendering context :)
 let $q := request:get-parameter("q", "")
@@ -114,35 +85,20 @@ let $context := map:merge((
                 })
             else
                 array {},
-        "page-title": $page-title,
+        "page-title": ($page?title, "")[1],
         "page-html": $page?html,
-        "extra-head": $extra-head,
         "testimonials": testimonials:list(4),
         "news-items": news:latest(3),
         "launcher-apps": launcher:apps()
     }
 ))
 
-(: Pass 1: render the content template :)
-let $content-resolved := local:resolver($content-file)
-let $page-content :=
-    if (exists($content-resolved?content)) then
-        tmpl:process($content-resolved?content, $context, map {
-            "resolver": local:resolver#1
-        })
-    else
-        <div>Content template not found: {$content-file}</div>
-
-(: Pass 2: render base-page.html with $page-content injected :)
-let $base-resolved := local:resolver("templates/base-page.tpl")
-let $full-context := map:merge((
-    $context,
-    map { "page-content": $page-content }
-))
+(: Render the template — extends handles the base-page wrapping :)
+let $resolved := local:resolver($template-rel)
 return
-    if (exists($base-resolved?content)) then
-        tmpl:process($base-resolved?content, $full-context, map {
+    if (exists($resolved?content)) then
+        tmpl:process($resolved?content, $context, map {
             "resolver": local:resolver#1
         })
     else
-        <div>Base template not found</div>
+        <div>Template not found: {$template-rel}</div>

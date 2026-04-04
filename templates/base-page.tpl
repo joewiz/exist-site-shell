@@ -2,9 +2,9 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>[[ $page-title ]]</title>
+    <title>[% block title %]eXist-db[% endblock %]</title>
     <link rel="stylesheet" href="[[ $shell-base ]]/resources/css/site.css"/>
-    [[ $extra-head ]]
+    [% block head %][% endblock %]
 </head>
 <body>
     <a href="#main-content" class="skip-link">Skip to content</a>
@@ -35,7 +35,7 @@
             <div class="site-user">
                 [% if $user != 'guest' %]
                     <span>[[ $user ]]</span>
-                    <a href="[[ $shell-base ]]/logout">Logout</a>
+                    <a href="[[ $shell-base ]]/logout?redirect=[[ encode-for-uri(request:get-uri()) ]]">Logout</a>
                 [% else %]
                     <a href="[[ $shell-base ]]/login">Login</a>
                 [% endif %]
@@ -44,7 +44,7 @@
     </header>
 
     <main id="main-content">
-        [[ $page-content ]]
+        [% block content %][% endblock %]
     </main>
 
     <footer class="site-footer">
