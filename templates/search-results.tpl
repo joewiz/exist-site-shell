@@ -1,17 +1,17 @@
 ---json
 {
     "templating": {
-        "extends": "templates/base-page.tpl"
+        "extends": "templates/base-page.html"
     }
 }
 ---
-[% template title %]Search -- [[ $site-name ]][% endtemplate %]
+[% template title %]Search -- [[ $site?name ]][% endtemplate %]
 
 [% template content %]
 <div class="search-results-page">
     <h1>Search</h1>
 
-    <form class="search-form" action="[[ $shell-base ]]/search" method="get">
+    <form class="search-form" action="[[ $context-path ]]/search" method="get">
         <input type="search" name="q" value="[[ $q ]]"
                placeholder="Search docs, functions, notebooks..."
                aria-label="Search query"/>

@@ -1,11 +1,11 @@
 ---json
 {
     "templating": {
-        "extends": "templates/base-page.tpl"
+        "extends": "templates/base-page.html"
     }
 }
 ---
-[% template title %]Login -- [[ $site-name ]][% endtemplate %]
+[% template title %]Login -- [[ $site?name ]][% endtemplate %]
 
 [% template content %]
 <div class="login-page">
@@ -17,7 +17,7 @@
     </div>
     [% endif %]
 
-    <form class="login-form" method="post" action="[[ $shell-base ]]/login">
+    <form class="login-form" method="post" action="[[ $context-path ]]/login">
         <div class="form-field">
             <label for="login-user">Username</label>
             <input type="text" id="login-user" name="user" required="" autocomplete="username"/>

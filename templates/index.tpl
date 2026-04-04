@@ -1,14 +1,14 @@
 ---json
 {
     "templating": {
-        "extends": "templates/base-page.tpl"
+        "extends": "templates/base-page.html"
     }
 }
 ---
 [% template title %]eXist-db -- The Open Source Native XML Database[% endtemplate %]
 
 [% template head %]
-<link rel="stylesheet" href="[[ $shell-base ]]/resources/css/landing.css"/>
+<link rel="stylesheet" href="[[ $context-path ]]/resources/css/landing.css"/>
 [% endtemplate %]
 
 [% template content %]
@@ -19,7 +19,7 @@
         <p class="hero-tagline">Store, query, and build applications -- all with XML and XQuery.</p>
         <div class="hero-actions">
             <a href="https://github.com/eXist-db/exist/releases" class="btn btn-primary">Download eXist-db</a>
-            <a href="[[ $shell-base ]]/about" class="btn btn-secondary">Learn More</a>
+            <a href="[[ $context-path ]]/about" class="btn btn-secondary">Learn More</a>
         </div>
     </section>
 
@@ -90,7 +90,7 @@
             <a href="https://github.com/eXist-db/exist">GitHub</a>
             <a href="https://exist-db.slack.com">Slack</a>
             <a href="https://fosstodon.org/@existdb">Mastodon</a>
-            <a href="[[ $shell-base ]]/community">Get Involved</a>
+            <a href="[[ $context-path ]]/community">Get Involved</a>
         </div>
     </section>
 </div>

@@ -1,16 +1,16 @@
 ---json
 {
     "templating": {
-        "extends": "templates/base-page.tpl"
+        "extends": "templates/base-page.html"
     }
 }
 ---
-[% template title %]Page Not Found -- [[ $site-name ]][% endtemplate %]
+[% template title %]Page Not Found -- [[ $site?name ]][% endtemplate %]
 
 [% template content %]
 <div class="error-page">
     <h1>Page Not Found</h1>
     <p>The page you requested could not be found.</p>
-    <p><a href="[[ $shell-base ]]/">Return to the home page</a></p>
+    <p><a href="[[ $context-path ]]/">Return to the home page</a></p>
 </div>
 [% endtemplate %]
