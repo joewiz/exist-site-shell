@@ -68,6 +68,8 @@ return
     },
 
     render() {
+        const firstQuery = this.queries[0].query;
+        const firstDesc = this.queries[0].description;
         this.container.innerHTML = `
             <div class="try-me">
                 <div class="try-me-header">
@@ -78,13 +80,14 @@ return
                         <button class="try-me-next">Next &rarr;</button>
                     </div>
                 </div>
-                <p class="try-me-description"></p>
+                <p class="try-me-description">${firstDesc}</p>
                 <div class="try-me-editor">
-                    <jinn-codemirror class="try-me-source" mode="xquery"></jinn-codemirror>
+                    <jinn-codemirror class="try-me-source" mode="xquery"
+                        code="${firstQuery.replace(/"/g, '&quot;')}"></jinn-codemirror>
                     <button class="try-me-run">Run &#9654;</button>
                 </div>
                 <div class="try-me-output">
-                    <jinn-codemirror class="try-me-result" mode="xml"></jinn-codemirror>
+                    <pre class="try-me-result">Click "Run" to execute the query.</pre>
                 </div>
             </div>
         `;
@@ -101,9 +104,19 @@ return
         await customElements.whenDefined("jinn-codemirror");
 
         this.sourceEditor = this.container.querySelector(".try-me-source");
-        this.resultEditor = this.container.querySelector(".try-me-result");
+    },
 
-        this.showQuery(0);
+    /** Set editor content with retry — waits for CM view to be ready */
+    setEditorContent(editor, text) {
+        if (!editor) return;
+        const attempt = () => {
+            if (editor._editor) {
+                editor.content = text;
+            } else {
+                requestAnimationFrame(attempt);
+            }
+        };
+        attempt();
     },
 
     showQuery(index) {
@@ -111,12 +124,11 @@ return
         const q = this.queries[index];
         const el = this.container;
 
-        if (this.sourceEditor) {
-            this.sourceEditor.content = q.query;
-        }
-        if (this.resultEditor) {
-            this.resultEditor.content = 'Click "Run" to execute the query.';
-            this.resultEditor.mode = "text";
+        this.setEditorContent(this.sourceEditor, q.query);
+        const resultEl = this.container.querySelector(".try-me-result");
+        if (resultEl) {
+            resultEl.textContent = 'Click "Run" to execute the query.';
+            resultEl.className = "try-me-result";
         }
 
         el.querySelector(".try-me-description").textContent = q.description;
@@ -146,10 +158,9 @@ return
             q.query = this.sourceEditor.content || q.query;
         }
 
-        if (this.resultEditor) {
-            this.resultEditor.content = "Running...";
-            this.resultEditor.mode = "text";
-        }
+        const resultEl = this.container.querySelector(".try-me-result");
+        resultEl.textContent = "Running...";
+        resultEl.className = "try-me-result";
         runBtn.disabled = true;
 
         try {
@@ -169,30 +180,18 @@ return
 
             const data = await response.json();
 
-            if (this.resultEditor) {
-                if (data.error) {
-                    this.resultEditor.content = data.error;
-                    this.resultEditor.mode = "text";
-                } else {
-                    this.resultEditor.content = data.result;
-                    // Detect result type for highlighting
-                    const text = data.result || "";
-                    if (/^\s*</.test(text)) {
-                        this.resultEditor.mode = "xml";
-                    } else if (/^\s*[\[{]/.test(text)) {
-                        this.resultEditor.mode = "json";
-                    } else {
-                        this.resultEditor.mode = "text";
-                    }
-                }
+            if (data.error) {
+                resultEl.textContent = data.error;
+                resultEl.className = "try-me-result try-me-error";
+            } else {
+                resultEl.textContent = data.result;
+                resultEl.className = "try-me-result try-me-success";
             }
         } catch (err) {
-            if (this.resultEditor) {
-                this.resultEditor.content =
-                    "Could not connect to the query service.\n" +
-                    "Make sure the Notebook app is installed.";
-                this.resultEditor.mode = "text";
-            }
+            resultEl.textContent =
+                "Could not connect to the query service.\n" +
+                "Make sure the Notebook app is installed.";
+            resultEl.className = "try-me-result try-me-error";
         } finally {
             runBtn.disabled = false;
         }

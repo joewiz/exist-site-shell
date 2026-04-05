@@ -108,12 +108,26 @@
 }
 
 .try-me-result {
-    max-height: 12rem;
-    overflow: hidden;
+    margin: 0;
+    font-family: var(--site-font-mono, monospace);
     font-size: 0.85rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 12rem;
+    overflow-y: auto;
+    color: var(--site-text-muted, #666);
+    line-height: 1.5;
 }
 
-/* Constrain jinn-codemirror heights */
+.try-me-success {
+    color: var(--site-text, #333);
+}
+
+.try-me-error {
+    color: #b71c1c;
+}
+
+/* Constrain jinn-codemirror source editor */
 .try-me jinn-codemirror {
     display: block;
 }
@@ -121,11 +135,6 @@
 .try-me .cm-editor {
     max-height: 14rem;
     font-size: 0.85rem;
-}
-
-.try-me-output .cm-editor {
-    max-height: 12rem;
-    background: transparent;
 }
 
 /* Hero */
