@@ -9,6 +9,7 @@
 
 [% template head %]
 <link rel="stylesheet" href="[[ $context-path ]]/resources/css/landing.css"/>
+<script src="[[ $context-path ]]/resources/js/try-me.js" defer="defer"></script>
 [% endtemplate %]
 
 [% template content %]
@@ -22,6 +23,8 @@
             <a href="[[ $context-path ]]/about" class="btn btn-secondary">Learn More</a>
         </div>
     </section>
+
+    <div id="try-me" data-eval-endpoint="[[ request:get-context-path() ]]/apps/notebook/api/eval"></div>
 
     <section class="features">
         <h2>Why eXist-db?</h2>

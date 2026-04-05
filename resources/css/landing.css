@@ -5,6 +5,138 @@
     margin: 0 auto;
 }
 
+/* Try Me Widget */
+.try-me {
+    border: 1px solid var(--site-border, #e0e0e0);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 2rem 1rem;
+}
+
+.try-me-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: var(--site-nav-bg, #2c3e50);
+    color: var(--site-nav-text, #ecf0f1);
+}
+
+.try-me-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: inherit;
+}
+
+.try-me-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.try-me-nav button {
+    background: rgba(255,255,255,0.15);
+    color: inherit;
+    border: none;
+    padding: 0.3rem 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.try-me-nav button:hover:not(:disabled) {
+    background: rgba(255,255,255,0.25);
+}
+
+.try-me-nav button:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.try-me-counter {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+.try-me-description {
+    margin: 0;
+    padding: 0.75rem 1rem 0;
+    font-size: 0.9rem;
+    color: var(--site-text-muted, #666);
+}
+
+.try-me-editor {
+    padding: 0.75rem 1rem;
+    position: relative;
+}
+
+.try-me-code {
+    margin: 0;
+    padding: 1rem;
+    background: #1e1e2e;
+    color: #cdd6f4;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    overflow-x: auto;
+    min-height: 3rem;
+    max-height: 12rem;
+}
+
+.try-me-code code {
+    background: none;
+    padding: 0;
+    color: inherit;
+    font-size: inherit;
+}
+
+.try-me-run {
+    position: absolute;
+    right: 1.75rem;
+    top: 1.5rem;
+    background: var(--site-accent, #3498db);
+    color: #fff;
+    border: none;
+    padding: 0.4rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.try-me-run:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+.try-me-run:disabled {
+    opacity: 0.5;
+}
+
+.try-me-output {
+    border-top: 1px solid var(--site-border, #e0e0e0);
+    padding: 0.75rem 1rem;
+    background: var(--site-surface, #f5f5f5);
+}
+
+.try-me-result {
+    font-family: var(--site-font-mono, monospace);
+    font-size: 0.85rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 12rem;
+    overflow-y: auto;
+    color: var(--site-text-muted, #666);
+    line-height: 1.5;
+}
+
+.try-me-success {
+    color: var(--site-text, #333);
+}
+
+.try-me-error {
+    color: #b71c1c;
+}
+
 /* Hero */
 .hero {
     text-align: center;
