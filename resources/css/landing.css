@@ -127,7 +127,7 @@
     color: #b71c1c;
 }
 
-/* Constrain jinn-codemirror source editor */
+/* Constrain jinn-codemirror editors */
 .try-me jinn-codemirror {
     display: block;
 }
@@ -135,6 +135,15 @@
 .try-me .cm-editor {
     max-height: 14rem;
     font-size: 0.85rem;
+}
+
+.try-me-result-cm {
+    max-height: 12rem;
+    overflow: hidden;
+}
+
+.try-me-result-cm .cm-editor {
+    max-height: 12rem;
 }
 
 /* Hero */

@@ -76,7 +76,7 @@ let $context := map {
     "styles": array { "resources/css/exist-site.css", "resources/css/landing.css" },
     "site": map {
         "name": "eXist-db",
-        "logo": "resources/images/exist-logo.svg"
+        "logo": "resources/images/existdb-logo.svg"
     },
     "nav": map {
         "items": array {

@@ -125,11 +125,9 @@ return
         const el = this.container;
 
         this.setEditorContent(this.sourceEditor, q.query);
-        const resultEl = this.container.querySelector(".try-me-result");
-        if (resultEl) {
-            resultEl.textContent = 'Click "Run" to execute the query.';
-            resultEl.className = "try-me-result";
-        }
+        // Restore plain <pre> for result area (may have been replaced by jinn-codemirror)
+        const output = el.querySelector(".try-me-output");
+        output.innerHTML = '<pre class="try-me-result">Click "Run" to execute the query.</pre>';
 
         el.querySelector(".try-me-description").textContent = q.description;
         el.querySelector(".try-me-counter").textContent =
@@ -158,9 +156,10 @@ return
             q.query = this.sourceEditor.content || q.query;
         }
 
-        const resultEl = this.container.querySelector(".try-me-result");
-        resultEl.textContent = "Running...";
-        resultEl.className = "try-me-result";
+        // Ensure we have a <pre> for the result
+        const output = this.container.querySelector(".try-me-output");
+        output.innerHTML = '<pre class="try-me-result">Running...</pre>';
+        const resultEl = output.querySelector(".try-me-result");
         runBtn.disabled = true;
 
         try {
@@ -184,8 +183,24 @@ return
                 resultEl.textContent = data.error;
                 resultEl.className = "try-me-result try-me-error";
             } else {
-                resultEl.textContent = data.result;
-                resultEl.className = "try-me-result try-me-success";
+                const text = data.result || "";
+                // Detect content type for syntax highlighting
+                const isXml = /^\s*</.test(text);
+                const isJson = /^\s*[\[{]/.test(text);
+                const mode = isXml ? "xml" : isJson ? "json" : null;
+
+                if (mode && text.length < 50000) {
+                    // Create fresh jinn-codemirror with code attribute for highlighting
+                    const cm = document.createElement("jinn-codemirror");
+                    cm.className = "try-me-result-cm";
+                    cm.setAttribute("mode", mode);
+                    cm.setAttribute("code", text);
+                    output.innerHTML = "";
+                    output.appendChild(cm);
+                } else {
+                    resultEl.textContent = text;
+                    resultEl.className = "try-me-result try-me-success";
+                }
             }
         } catch (err) {
             resultEl.textContent =
