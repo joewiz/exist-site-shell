@@ -139,10 +139,16 @@
 
 .try-me-result-cm {
     max-height: 12rem;
-    overflow: hidden;
+    overflow-y: auto;
 }
 
 .try-me-result-cm .cm-editor {
+    max-height: 12rem;
+    overflow-y: auto;
+}
+
+.try-me-output .cm-scroller {
+    overflow-y: auto;
     max-height: 12rem;
 }
 
