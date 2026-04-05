@@ -61,7 +61,7 @@ return
         {
             title: "World cities",
             description: "Top 10 most populous cities in the Mondial geographic database.",
-            query: `for $city in doc("/db/apps/exist-site-shell/data/mondial.xml")//city
+            query: `for $city in doc("data/mondial.xml")//city
 let $pop := $city/population[last()]
 where exists($pop)
 order by number($pop) descending
@@ -72,7 +72,7 @@ return
         {
             title: "Countries and religions",
             description: "Find countries where Buddhism is practiced by more than 50% of the population.",
-            query: `for $country in doc("/db/apps/exist-site-shell/data/mondial.xml")//country
+            query: `for $country in doc("data/mondial.xml")//country
 let $buddhism := $country/religions[contains(., "Buddhist")]
 where number($buddhism/@percentage) > 50
 order by number($buddhism/@percentage) descending
