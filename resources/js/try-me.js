@@ -2,8 +2,8 @@
  * "Try Me" XQuery demo widget.
  *
  * Executes XQuery queries against the notebook app's eval API
- * and displays results in a compact pane. Queries progress from
- * simple to complex, with prev/next navigation.
+ * and displays results in a compact pane. Uses jinn-codemirror
+ * for syntax-highlighted source display and result output.
  */
 const TryMe = {
     queries: [
@@ -53,17 +53,18 @@ return
     currentIndex: 0,
     container: null,
     evalEndpoint: null,
+    sourceEditor: null,
+    resultEditor: null,
 
     init(containerId) {
         this.container = document.getElementById(containerId);
         if (!this.container) return;
 
-        // Detect notebook API endpoint
         this.evalEndpoint = this.container.dataset.evalEndpoint ||
             "/exist/apps/notebook/api/eval";
 
         this.render();
-        this.showQuery(0);
+        this.initEditors();
     },
 
     render() {
@@ -79,11 +80,11 @@ return
                 </div>
                 <p class="try-me-description"></p>
                 <div class="try-me-editor">
-                    <pre class="try-me-code"><code></code></pre>
-                    <button class="try-me-run">Run</button>
+                    <jinn-codemirror class="try-me-source" mode="xquery"></jinn-codemirror>
+                    <button class="try-me-run">Run &#9654;</button>
                 </div>
                 <div class="try-me-output">
-                    <div class="try-me-result">Click "Run" to execute the query.</div>
+                    <jinn-codemirror class="try-me-result" mode="xml"></jinn-codemirror>
                 </div>
             </div>
         `;
@@ -96,18 +97,31 @@ return
             .addEventListener("click", () => this.run());
     },
 
+    async initEditors() {
+        await customElements.whenDefined("jinn-codemirror");
+
+        this.sourceEditor = this.container.querySelector(".try-me-source");
+        this.resultEditor = this.container.querySelector(".try-me-result");
+
+        this.showQuery(0);
+    },
+
     showQuery(index) {
         this.currentIndex = index;
         const q = this.queries[index];
         const el = this.container;
 
-        el.querySelector(".try-me-code code").textContent = q.query;
+        if (this.sourceEditor) {
+            this.sourceEditor.content = q.query;
+        }
+        if (this.resultEditor) {
+            this.resultEditor.content = 'Click "Run" to execute the query.';
+            this.resultEditor.mode = "text";
+        }
+
         el.querySelector(".try-me-description").textContent = q.description;
         el.querySelector(".try-me-counter").textContent =
             `${index + 1} / ${this.queries.length}`;
-        el.querySelector(".try-me-result").textContent =
-            'Click "Run" to execute the query.';
-        el.querySelector(".try-me-result").className = "try-me-result";
 
         el.querySelector(".try-me-prev").disabled = index === 0;
         el.querySelector(".try-me-next").disabled =
@@ -125,11 +139,17 @@ return
 
     async run() {
         const q = this.queries[this.currentIndex];
-        const resultEl = this.container.querySelector(".try-me-result");
         const runBtn = this.container.querySelector(".try-me-run");
 
-        resultEl.textContent = "Running...";
-        resultEl.className = "try-me-result";
+        if (this.sourceEditor) {
+            // Read back from editor in case user edited the query
+            q.query = this.sourceEditor.content || q.query;
+        }
+
+        if (this.resultEditor) {
+            this.resultEditor.content = "Running...";
+            this.resultEditor.mode = "text";
+        }
         runBtn.disabled = true;
 
         try {
@@ -149,18 +169,30 @@ return
 
             const data = await response.json();
 
-            if (data.error) {
-                resultEl.textContent = data.error;
-                resultEl.className = "try-me-result try-me-error";
-            } else {
-                resultEl.textContent = data.result;
-                resultEl.className = "try-me-result try-me-success";
+            if (this.resultEditor) {
+                if (data.error) {
+                    this.resultEditor.content = data.error;
+                    this.resultEditor.mode = "text";
+                } else {
+                    this.resultEditor.content = data.result;
+                    // Detect result type for highlighting
+                    const text = data.result || "";
+                    if (/^\s*</.test(text)) {
+                        this.resultEditor.mode = "xml";
+                    } else if (/^\s*[\[{]/.test(text)) {
+                        this.resultEditor.mode = "json";
+                    } else {
+                        this.resultEditor.mode = "text";
+                    }
+                }
             }
         } catch (err) {
-            resultEl.textContent =
-                "Could not connect to the query service. " +
-                "Make sure the Notebook app is installed.";
-            resultEl.className = "try-me-result try-me-error";
+            if (this.resultEditor) {
+                this.resultEditor.content =
+                    "Could not connect to the query service.\n" +
+                    "Make sure the Notebook app is installed.";
+                this.resultEditor.mode = "text";
+            }
         } finally {
             runBtn.disabled = false;
         }

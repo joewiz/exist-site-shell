@@ -9,6 +9,7 @@
 
 [% template head %]
 <link rel="stylesheet" href="[[ $context-path ]]/resources/css/landing.css"/>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@jinntec/jinn-codemirror@1.18.2/dist/jinn-codemirror-bundle.js"></script>
 <script src="[[ $context-path ]]/resources/js/try-me.js" defer="defer"></script>
 [% endtemplate %]
 
