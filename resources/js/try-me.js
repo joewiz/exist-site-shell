@@ -8,6 +8,15 @@
 const TryMe = {
     queries: [
         {
+            title: "Hello XQuery",
+            description: "Your first query — construct XML with a timestamp.",
+            query: `let $msg := "Hello XQuery!"
+return
+    <greeting timestamp="{current-dateTime()}">
+        {$msg}
+    </greeting>`
+        },
+        {
             title: "List the plays",
             description: "Retrieve all play titles from the Shakespeare collection.",
             query: `collection("data/shakespeare")/PLAY/TITLE/string()`
@@ -19,7 +28,7 @@ const TryMe = {
         },
         {
             title: "Search for a word",
-            description: "Find speeches containing the word \"love\" across all plays.",
+            description: "Find speeches containing \"love\" across all plays.",
             query: `for $speech in collection("data/shakespeare")//SPEECH
 where contains($speech/LINE, "love")
 return
@@ -29,17 +38,8 @@ return
     </match>`
         },
         {
-            title: "Count speeches per play",
-            description: "How many speeches does each play contain?",
-            query: `for $play in collection("data/shakespeare")/PLAY
-let $count := count($play//SPEECH)
-order by $count descending
-return
-    $play/TITLE || ": " || $count || " speeches"`
-        },
-        {
             title: "Who speaks the most?",
-            description: "Find the top 10 speakers by number of speeches across all plays.",
+            description: "Top 10 speakers by number of speeches across all plays.",
             query: `let $speeches := collection("data/shakespeare")//SPEECH
 for $speaker in distinct-values($speeches/SPEAKER)
 let $count := count($speeches[SPEAKER = $speaker])
@@ -47,6 +47,71 @@ order by $count descending
 return
     ($speaker || ": " || $count || " speeches")
 => subsequence(1, 10)`
+        },
+        {
+            title: "Group by speaker",
+            description: "Group all speeches mentioning \"king\" by who said them.",
+            query: `for $speech in collection("data/shakespeare")//SPEECH
+where contains($speech/LINE, "king")
+group by $speaker := $speech/SPEAKER/string()
+order by count($speech) descending
+return
+    <speaker name="{$speaker}" mentions="{count($speech)}"/>`
+        },
+        {
+            title: "World cities",
+            description: "Top 10 most populous cities in the Mondial geographic database.",
+            query: `for $city in doc("/db/apps/exist-site-shell/data/mondial.xml")//city
+let $pop := $city/population[last()]
+where exists($pop)
+order by number($pop) descending
+return
+    ($city/name/string() || ": " || format-number(number($pop), "#,###"))
+=> subsequence(1, 10)`
+        },
+        {
+            title: "Countries and religions",
+            description: "Find countries where Buddhism is practiced by more than 50% of the population.",
+            query: `for $country in doc("/db/apps/exist-site-shell/data/mondial.xml")//country
+let $buddhism := $country/religions[contains(., "Buddhist")]
+where number($buddhism/@percentage) > 50
+order by number($buddhism/@percentage) descending
+return
+    $country/name/string() || ": " || $buddhism/@percentage || "% Buddhist"`
+        },
+        {
+            title: "Higher-order functions",
+            description: "Use filter, for-each, and fold-left — XQuery's functional toolkit.",
+            query: `(: Filter even numbers, square them, sum the result :)
+let $numbers := 1 to 10
+let $evens := filter($numbers, function($n) { $n mod 2 = 0 })
+let $squared := for-each($evens, function($n) { $n * $n })
+let $sum := fold-left($squared, 0, function($a, $b) { $a + $b })
+return
+    <result>
+        <evens>{$evens}</evens>
+        <squared>{$squared}</squared>
+        <sum>{$sum}</sum>
+    </result>`
+        },
+        {
+            title: "Generate HTML",
+            description: "Build a color-coded multiplication table entirely in XQuery.",
+            query: `<table border="1" style="border-collapse:collapse">{
+    for $row in 1 to 8
+    return
+        <tr>{
+            for $col in 1 to 8
+            let $val := $row * $col
+            let $bg := if ($row = $col) then "#bee3f8"
+                       else if ($val mod 2 = 0) then "#f0f0f0"
+                       else "#ffffff"
+            return
+                <td style="padding:4px 8px;text-align:right;background:{$bg}">
+                    {$val}
+                </td>
+        }</tr>
+}</table>`
         }
     ],
 
