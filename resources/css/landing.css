@@ -18,8 +18,8 @@
     align-items: center;
     justify-content: space-between;
     padding: 0.75rem 1rem;
-    background: var(--site-nav-bg, #2c3e50);
-    color: var(--site-nav-text, #ecf0f1);
+    background: var(--site-nav-bg, #1a365d);
+    color: var(--site-nav-text, #bee3f8);
 }
 
 .try-me-header h3 {
