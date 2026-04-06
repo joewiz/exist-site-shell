@@ -65,6 +65,7 @@ export { clean };
 function copyXarSources() {
   return src([
     "controller.xq",
+    "finish.xq",
     "content/**/*",
     "modules/**/*",
     "templates/**/*",
