@@ -34,16 +34,8 @@ declare function local:copy-collection($source as xs:string, $dest as xs:string)
     for $resource in xmldb:get-child-resources($source)
     let $src-path := $source || "/" || $resource
     return
-        if (ends-with($resource, ".html") and doc-available($src-path)) then
-            (: Store .html as binary to preserve Jinks directives :)
-            let $content := serialize(doc($src-path))
-            let $clean := if (starts-with($content, "<?xml")) then
-                substring-after($content, "?>") else $content
-            let $_ := if (doc-available($dest || "/" || $resource)) then
-                xmldb:remove($dest, $resource) else ()
-            return xmldb:store($dest, $resource, $clean, "application/octet-stream")
-        else if (util:binary-doc-available($src-path)) then
-            xmldb:store($dest, $resource, util:binary-doc($src-path), "application/octet-stream")
+        if (util:binary-doc-available($src-path)) then
+            xmldb:store($dest, $resource, util:binary-doc($src-path))
         else if (doc-available($src-path)) then
             xmldb:store($dest, $resource, doc($src-path))
         else (),
