@@ -67,6 +67,7 @@ function copyXarSources() {
     "controller.xq",
     "finish.xq",
     "content/**/*",
+    "profile/**/*",
     "modules/**/*",
     "templates/**/*",
     "resources/**/*",
