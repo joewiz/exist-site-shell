@@ -1,7 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  App registry for the eXist-db site shell.
+
+  Each <app> entry defines:
+    abbrev   - the eXpath package abbreviation (also the /db/apps/{abbrev} collection name)
+    title    - display name used in the nav bar
+    fallback - public URL to use when the app is not installed locally;
+               used by site-config:resolve() to expand {abbrev/path} cross-references
+
+  The fallback URL should be the root of the app on exist-db.org (no trailing slash).
+-->
 <nav-config xmlns="http://exist-db.org/site/nav">
-    <app abbrev="dashboard" title="Dashboard"/>
-    <app abbrev="docs" title="Documentation"/>
-    <app abbrev="notebook" title="Notebook"/>
-    <app abbrev="blog" title="Blog"/>
+    <app abbrev="dashboard" title="Dashboard"
+         fallback="https://exist-db.org/exist/apps/dashboard"/>
+    <app abbrev="docs"      title="Documentation"
+         fallback="https://exist-db.org/exist/apps/docs"/>
+    <app abbrev="notebook"  title="Notebook"
+         fallback="https://exist-db.org/exist/apps/notebook"/>
+    <app abbrev="blog"      title="Blog"
+         fallback="https://exist-db.org/exist/apps/blog"/>
+    <app abbrev="eXide"     title="eXide"
+         fallback="https://exist-db.org/exist/apps/eXide"/>
 </nav-config>
