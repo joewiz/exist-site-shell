@@ -8,7 +8,8 @@
     "build": "gulp build",
     "deploy": "gulp install",
     "develop": "gulp",
-    "setup": "node setup.js"
+    "setup": "node setup.js",
+    "test": "xst execute -f test/xqs/run-site-config-tests.xq"
   },
   "repository": {
     "type": "git",

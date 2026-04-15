@@ -20,11 +20,19 @@ declare variable $exist:controller external;
 declare variable $exist:prefix external;
 declare variable $exist:root external;
 
+import module namespace login = "http://exist-db.org/xquery/login"
+    at "resource:org/exist/xquery/modules/persistentlogin/login.xql";
 import module namespace redirects = "http://exist-db.org/site/redirects"
     at "modules/redirects.xqm";
 
 (: Static Markdown pages :)
 declare variable $local:page-slugs := ("about", "community", "press", "privacy");
+
+(: Process persistent login on every request :)
+let $_ := login:set-user("org.exist.login", xs:dayTimeDuration("P7D"), false())
+let $current-user := request:get-attribute("org.exist.login.user")
+
+return
 
 if ($exist:path = "" or $exist:path = "/") then
     <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
@@ -57,24 +65,19 @@ else if (substring-after($exist:path, "/") = $local:page-slugs) then
 
 else if ($exist:path = "/login") then
     if (request:get-method() = "POST") then
-        let $user := request:get-parameter("user", ())
-        let $password := request:get-parameter("password", ())
-        let $login := xmldb:authenticate("/db", $user, $password)
-        return
-            if ($login) then
-                let $_ := session:set-attribute("user", $user)
-                let $redirect := request:get-parameter("redirect", request:get-context-path() || "/apps/exist-site-shell/")
-                return
-                    <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
-                        <redirect url="{$redirect}"/>
-                    </dispatch>
-            else
+        if ($current-user and not($current-user = ("guest", "nobody"))) then
+            let $redirect := request:get-parameter("redirect", request:get-context-path() || "/apps/exist-site-shell/")
+            return
                 <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
-                    <forward url="{$exist:controller}/modules/view.xq">
-                        <set-attribute name="template" value="templates/login.tpl"/>
-                        <set-attribute name="login-error" value="Invalid username or password"/>
-                    </forward>
+                    <redirect url="{$redirect}"/>
                 </dispatch>
+        else
+            <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
+                <forward url="{$exist:controller}/modules/view.xq">
+                    <set-attribute name="template" value="templates/login.tpl"/>
+                    <set-attribute name="login-error" value="Invalid username or password"/>
+                </forward>
+            </dispatch>
     else
         <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
             <forward url="{$exist:controller}/modules/view.xq">

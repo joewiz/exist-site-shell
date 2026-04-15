@@ -13,7 +13,7 @@ xquery version "3.1";
 module namespace nav = "http://exist-db.org/site/nav";
 
 import module namespace site-config = "http://exist-db.org/site/shell-config"
-    at "site-config.xqm";
+    at "/db/apps/exist-site-shell/modules/site-config.xqm";
 
 (:~
  : Build the nav bar array from the configured items.

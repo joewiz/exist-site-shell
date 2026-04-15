@@ -72,6 +72,7 @@ function copyXarSources() {
     "templates/**/*",
     "resources/**/*",
     "data/**/*",
+    "test/**/*",
   ], { encoding: false, base: "." })
     .pipe(dest(paths.staging));
 }

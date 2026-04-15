@@ -43,7 +43,7 @@ declare variable $config:site-logo :=
  : @return map with shell-base, site-name, site-logo, and current user
  :)
 declare function config:context() as map(*) {
-    let $user := (session:get-attribute("user"), sm:id()//sm:real/sm:username/string())[1]
+    let $user := (request:get-attribute("org.exist.login.user"), sm:id()//sm:real/sm:username/string())[1]
     return map {
         "shell-base": $config:shell-base,
         "site-name": $config:site-name,

@@ -18,6 +18,7 @@
     [% endif %]
 
     <form class="login-form" method="post" action="[[ $context-path ]]/login">
+        <input type="hidden" name="duration" value="P7D"/>
         <div class="form-field">
             <label for="login-user">Username</label>
             <input type="text" id="login-user" name="user" required="" autocomplete="username"/>

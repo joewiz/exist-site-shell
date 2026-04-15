@@ -14,10 +14,10 @@ module namespace login = "http://exist-db.org/site/login";
  : @return the username string
  :)
 declare function login:current-user() as xs:string {
-    let $session-user := session:get-attribute("user")
+    let $login-user := request:get-attribute("org.exist.login.user")
     return
-        if (exists($session-user) and $session-user != "") then
-            $session-user
+        if (exists($login-user) and $login-user != "") then
+            $login-user
         else
             sm:id()//sm:real/sm:username/string()
 };

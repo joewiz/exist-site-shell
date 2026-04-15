@@ -21,4 +21,6 @@
          fallback="https://exist-db.org/exist/apps/blog"/>
     <app abbrev="eXide"     title="eXide"
          fallback="https://exist-db.org/exist/apps/eXide"/>
+    <app abbrev="monex"     title="Monex"
+         fallback="https://exist-db.org/exist/apps/monex"/>
 </nav-config>

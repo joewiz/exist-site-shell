@@ -20,8 +20,12 @@ xquery version "3.1";
  :   {docs/articles/repo#how-to}        → /exist/apps/docs/articles/repo#how-to
  :   {docs/functions/fn/string-join#3}  → /exist/apps/docs/functions/fn/string-join#3
  :   {blog/2026/welcome#intro}          → /exist/apps/blog/2026/welcome#intro
+ :
+ : NOTE: This is a test-isolation copy. It uses a unique namespace URI
+ : to avoid eXist-db's persistent module-pool conflict with the production
+ : copy deployed by docs/blog/notebook at their own app paths.
  :)
-module namespace site-config = "http://exist-db.org/site/shell-config";
+module namespace site-config = "http://exist-db.org/apps/exist-site-shell/test/site-config";
 
 declare namespace n = "http://exist-db.org/site/nav";
 
