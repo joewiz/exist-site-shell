@@ -20,17 +20,52 @@
                 [% if $app?active %]
                 <li><a href="[[ $app?url ]]" class="active">[[ $app?title ]]</a></li>
                 [% else %]
+                [% if $app?external %]
+                <li><a href="[[ $app?url ]]" target="_blank" rel="noopener">[[ $app?title ]]</a></li>
+                [% else %]
                 <li><a href="[[ $app?url ]]">[[ $app?title ]]</a></li>
+                [% endif %]
                 [% endif %]
                 [% endfor %]
             </ul>
 
-            <form class="site-search" action="[[ $shell-base ]]/search" method="get">
-                <label for="site-search-input" class="visually-hidden">Search</label>
-                <input type="search" id="site-search-input" name="q"
-                       placeholder="Search docs, functions, notebooks..."
-                       aria-label="Sitewide search"/>
-            </form>
+            <div class="site-search-wrapper">
+                <form class="site-search" action="[[ $shell-base ]]/search" method="get" id="site-search-form">
+                    <label for="site-search-input" class="visually-hidden">Search</label>
+                    <div class="search-input-group">
+                        <input type="search" id="site-search-input" name="q"
+                               placeholder="Search docs, functions, notebooks..."
+                               autocomplete="off"
+                               aria-label="Sitewide search"
+                               aria-owns="search-scope-popup"/>
+                        <button type="button" class="search-scope-btn" id="search-scope-btn"
+                                aria-haspopup="listbox" aria-expanded="false"
+                                aria-controls="search-scope-popup"
+                                aria-label="Search scope: All apps">
+                            <span id="search-scope-label">All</span>
+                            <span class="search-scope-arrow" aria-hidden="true">&#9662;</span>
+                        </button>
+                    </div>
+                    <input type="hidden" name="app" id="search-app-input" value=""/>
+                </form>
+                <ul class="search-scope-popup" id="search-scope-popup"
+                    role="listbox" aria-label="Search scope" hidden>
+                    <li class="scope-opt" role="option" tabindex="-1"
+                        data-abbrev="" data-label="All">All apps</li>
+                    [% for $app in $nav-apps?* %]
+                    [% if $app?abbrev != '' %]
+                    [% if $app?active %]
+                    <li class="scope-opt" role="option" tabindex="-1"
+                        data-abbrev="[[ $app?abbrev ]]" data-label="[[ $app?title ]]"
+                        data-active="true">[[ $app?title ]]</li>
+                    [% else %]
+                    <li class="scope-opt" role="option" tabindex="-1"
+                        data-abbrev="[[ $app?abbrev ]]" data-label="[[ $app?title ]]">[[ $app?title ]]</li>
+                    [% endif %]
+                    [% endif %]
+                    [% endfor %]
+                </ul>
+            </div>
 
             <div class="site-user">
                 [% if $user != 'guest' %]
@@ -53,6 +88,6 @@
            <a href="https://exist-db.org">exist-db.org</a>
         </p>
     </footer>
-
+    <script src="[[ $shell-base ]]/resources/js/search-scope.js"></script>
 </body>
 </html>

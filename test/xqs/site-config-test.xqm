@@ -81,7 +81,7 @@ function sc-test:resolve-installed-app-path-only-no-double-slash() {
 
 declare %test:assertTrue
 function sc-test:resolve-uninstalled-uses-registry-fallback() {
-    let $registry := doc("/db/apps/exist-site-shell/data/nav-config.xml")
+    let $registry := doc("/db/apps/exist-site-shell/data/app-registry.xml")
     let $uninstalled :=
         $registry//*:app[not(xmldb:collection-available("/db/apps/" || @abbrev))][1]
     return
@@ -94,7 +94,7 @@ function sc-test:resolve-uninstalled-uses-registry-fallback() {
 
 declare %test:assertTrue
 function sc-test:resolve-uninstalled-with-path-appended-to-fallback() {
-    let $registry := doc("/db/apps/exist-site-shell/data/nav-config.xml")
+    let $registry := doc("/db/apps/exist-site-shell/data/app-registry.xml")
     let $uninstalled :=
         $registry//*:app[not(xmldb:collection-available("/db/apps/" || @abbrev))][1]
     return
@@ -141,12 +141,12 @@ function sc-test:app-url-unknown-returns-marker() {
 
 declare %test:assertTrue
 function sc-test:registry-every-app-has-https-fallback() {
-    every $app in doc("/db/apps/exist-site-shell/data/nav-config.xml")//*:app
+    every $app in doc("/db/apps/exist-site-shell/data/app-registry.xml")//*:app
     satisfies starts-with(string($app/@fallback), "https://")
 };
 
 declare %test:assertTrue
 function sc-test:registry-every-fallback-contains-abbrev() {
-    every $app in doc("/db/apps/exist-site-shell/data/nav-config.xml")//*:app
+    every $app in doc("/db/apps/exist-site-shell/data/app-registry.xml")//*:app
     satisfies contains(string($app/@fallback), string($app/@abbrev))
 };

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  App registry for eXist-db site-shell cross-reference resolution.
+
+  This file is the authoritative source for site-config:resolve() —
+  it maps every known app abbreviation to a fallback public URL used
+  when the app is not installed locally.
+
+  It is intentionally separate from nav-config.xml, which governs
+  what appears in the sitewide nav bar.  An app can be resolvable
+  here without ever appearing in the nav bar (e.g. eXide, monex).
+
+  Each <app> entry:
+    abbrev   - eXpath package abbreviation; also the /db/apps/{abbrev} path
+    fallback - public URL root on exist-db.org (no trailing slash)
+-->
+<app-registry xmlns="http://exist-db.org/site/nav">
+    <app abbrev="dashboard" fallback="https://exist-db.org/exist/apps/dashboard"/>
+    <app abbrev="docs"      fallback="https://exist-db.org/exist/apps/docs"/>
+    <app abbrev="notebook"  fallback="https://exist-db.org/exist/apps/notebook"/>
+    <app abbrev="blog"      fallback="https://exist-db.org/exist/apps/blog"/>
+    <app abbrev="eXide"     fallback="https://exist-db.org/exist/apps/eXide"/>
+    <app abbrev="monex"     fallback="https://exist-db.org/exist/apps/monex"/>
+</app-registry>

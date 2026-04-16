@@ -14,6 +14,8 @@ xquery version "3.1";
 import module namespace tmpl = "http://e-editiones.org/xquery/templates";
 import module namespace config = "http://exist-db.org/site/config"
     at "../content/exist-site.xqm";
+import module namespace nav = "http://exist-db.org/site/nav"
+    at "nav.xqm";
 import module namespace search = "http://exist-db.org/site/search"
     at "search.xqm";
 import module namespace pages = "http://exist-db.org/site/pages"
@@ -71,9 +73,16 @@ let $page :=
 (: Build rendering context — matches exist-site profile's base-page.html interface :)
 let $context-path := request:get-context-path() || "/apps/exist-site-shell"
 let $q := request:get-parameter("q", "")
+let $app-filter := request:get-parameter("app", ())
+let $section-filter := request:get-parameter("section", ())
+let $search-response :=
+    if ($q != "") then
+        search:query($q, map { "app": $app-filter, "section": $section-filter })
+    else
+        map { "results": array {}, "hier-facets": map {} }
 let $context := map {
     "context-path": $context-path,
-    "styles": array { "resources/css/exist-site.css", "resources/css/landing.css" },
+    "styles": array { "resources/css/site.css", "resources/css/landing.css" },
     "site": map {
         "name": "eXist-db",
         "logo": "resources/images/existdb-logo.svg"
@@ -88,18 +97,16 @@ let $context := map {
     },
     "q": $q,
     "login-error": request:get-attribute("login-error"),
-    "search-results":
-        if ($q != "") then
-            search:query($q, map {
-                "app": request:get-parameter("app", ())
-            })
-        else
-            array {},
+    "search-results": $search-response?results,
+    "search-hier-facets": $search-response?hier-facets,
+    "search-app-filter": ($app-filter, "")[1],
+    "search-section-filter": ($section-filter, "")[1],
     "page-title": ($page?title, "")[1],
     "page-html": $page?html,
     "testimonials": testimonials:list(4),
     "news-items": news:latest(3),
-    "launcher-apps": launcher:apps()
+    "launcher-apps": launcher:apps(),
+    "nav-apps": nav:apps()
 }
 
 (: Render the template — extends handles the base-page wrapping :)

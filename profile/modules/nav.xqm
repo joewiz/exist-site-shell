@@ -1,57 +1,75 @@
 xquery version "3.1";
 
 (:~
- : Navigation module for eXist-db site apps.
+ : Navigation module.
  :
- : Reads the nav items from the Jinks context (defined in config.json)
- : and returns an array of app descriptors for the nav bar template.
- :
- : Apps that are installed locally get a local URL; apps that are listed
- : in the registry but not installed get their configured fallback URL so
- : that the nav bar remains complete regardless of what is deployed.
+ : Reads the nav bar item list from data/nav-config.xml.
+ : Supports two entry types:
+ :   <app abbrev="..." title="..." fallback="..."/>
+ :       Only shown when the app is installed; URL is context-path + /apps/{abbrev}.
+ :   <link title="..." href="https://..." /> or <link title="..." path="/apps/..."/>
+ :       Always shown; href is used as-is, path is prepended with context-path.
+ :       Links have no abbrev so they are excluded from the search-scope selector.
  :)
 module namespace nav = "http://exist-db.org/site/nav";
 
-import module namespace site-config = "http://exist-db.org/site/shell-config"
-    at "/db/apps/exist-site-shell/modules/site-config.xqm";
+declare namespace n = "http://exist-db.org/site/nav";
 
 (:~
- : Build the nav bar array from the configured items.
+ : Return an array of maps for the nav bar, in document order.
  :
- : Each returned map contains:
- :   title     - display label
- :   abbrev    - eXpath package abbreviation
- :   url       - local URL if installed, fallback URL otherwise
- :   active    - true if the current request URI is within this app
- :   installed - true if the app is deployed locally
+ : Each map contains:
+ :   - title:      display label
+ :   - abbrev:     package abbreviation (empty string for <link> entries)
+ :   - url:        resolved URL
+ :   - active:     true when the current request URI starts with the app's path
+ :   - external:   true for http/https URLs (opens in new tab)
  :
- : @param $items        sequence of maps from config.json nav.items
- : @param $context-path the request context path (e.g. "/exist")
- : @return array of app-descriptor maps
+ : @return array of nav item maps
  :)
-declare function nav:apps($items as array(*)?, $context-path as xs:string) as array(*) {
-    let $current-uri    := request:get-uri()
-    let $server-context := request:get-context-path()
+declare function nav:apps() as array(*) {
+    let $context     := try { request:get-context-path() } catch * { "/exist" }
+    let $current-uri := try { request:get-uri() }         catch * { "" }
+    let $nav-config  := doc("/db/apps/exist-site-shell/data/nav-config.xml")/n:nav-config
     return array {
-        if (exists($items)) then
-            for $entry in $items?*
-            let $abbrev    := $entry?abbrev
-            let $local-path := $server-context || "/apps/" || $abbrev
-            let $installed  := xmldb:collection-available("/db/apps/" || $abbrev)
-            let $url        :=
-                if ($installed) then
-                    $local-path
-                else
-                    site-config:app-url($abbrev)
-            (: only include apps that have either a local install or a fallback :)
-            where $installed or not(starts-with($url, "#unresolved-"))
-            return map {
-                "title":     $entry?title,
-                "abbrev":    $abbrev,
-                "url":       $url,
-                "active":    $installed and starts-with($current-uri, $local-path),
-                "installed": $installed
-            }
-        else ()
+        for $entry in $nav-config/(n:app | n:link)
+        return
+            typeswitch ($entry)
+
+            case element(n:app) return
+                let $abbrev   := $entry/@abbrev/string()
+                let $app-path := $context || "/apps/" || $abbrev
+                where xmldb:collection-available("/db/apps/" || $abbrev)
+                return map {
+                    "title":    $entry/@title/string(),
+                    "abbrev":   $abbrev,
+                    "url":      $app-path,
+                    "active":   starts-with($current-uri, $app-path),
+                    "external": false()
+                }
+
+            case element(n:link) return
+                let $url :=
+                    if ($entry/@href) then $entry/@href/string()
+                    else $context || $entry/@path/string()
+                let $external := starts-with($url, "http://") or starts-with($url, "https://")
+                return map {
+                    "title":    $entry/@title/string(),
+                    "abbrev":   "",
+                    "url":      $url,
+                    "active":   not($external) and starts-with($current-uri, $url),
+                    "external": $external
+                }
+
+            default return ()
     }
+};
+
+(:~
+ : Two-argument overload for compatibility with the profile's base-page.html,
+ : which calls nav:apps($nav?items, $context-path). The arguments are ignored —
+ : nav-config.xml is the authoritative source.
+ :)
+declare function nav:apps($items as item()*, $context-path as xs:string) as array(*) {
+    nav:apps()
 };
