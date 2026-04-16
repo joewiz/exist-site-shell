@@ -1,7 +1,7 @@
 /**
  * "Try Me" XQuery demo widget.
  *
- * Executes XQuery queries against the notebook app's eval API
+ * Executes XQuery queries against the exist-api /api/eval endpoint
  * and displays results in a compact pane. Uses jinn-codemirror
  * for syntax-highlighted source display and result output.
  */
@@ -19,17 +19,17 @@ return
         {
             title: "List the plays",
             description: "Retrieve all play titles from the Shakespeare collection.",
-            query: `collection("data/shakespeare")/PLAY/TITLE/string()`
+            query: `collection("/db/apps/notebook/data/shakespeare")/PLAY/TITLE/string()`
         },
         {
             title: "Find characters",
             description: "List all characters in Hamlet.",
-            query: `doc("data/shakespeare/hamlet.xml")//PERSONA/string()`
+            query: `doc("/db/apps/notebook/data/shakespeare/hamlet.xml")//PERSONA/string()`
         },
         {
             title: "Search for a word",
             description: "Find speeches containing \"love\" across all plays.",
-            query: `for $speech in collection("data/shakespeare")//SPEECH
+            query: `for $speech in collection("/db/apps/notebook/data/shakespeare")//SPEECH
 where contains($speech/LINE, "love")
 return
     <match play="{$speech/ancestor::PLAY/TITLE}"
@@ -40,7 +40,7 @@ return
         {
             title: "Who speaks the most?",
             description: "Top 10 speakers by number of speeches across all plays.",
-            query: `let $speeches := collection("data/shakespeare")//SPEECH
+            query: `let $speeches := collection("/db/apps/notebook/data/shakespeare")//SPEECH
 for $speaker in distinct-values($speeches/SPEAKER)
 let $count := count($speeches[SPEAKER = $speaker])
 order by $count descending
@@ -51,7 +51,7 @@ return
         {
             title: "Group by speaker",
             description: "Group all speeches mentioning \"king\" by who said them.",
-            query: `for $speech in collection("data/shakespeare")//SPEECH
+            query: `for $speech in collection("/db/apps/notebook/data/shakespeare")//SPEECH
 where contains($speech/LINE, "king")
 group by $speaker := $speech/SPEAKER/string()
 order by count($speech) descending
@@ -61,7 +61,7 @@ return
         {
             title: "World cities",
             description: "Top 10 most populous cities in the Mondial geographic database.",
-            query: `for $city in doc("data/mondial.xml")//city
+            query: `for $city in doc("/db/apps/notebook/data/mondial.xml")//city
 let $pop := $city/population[last()]
 where exists($pop)
 order by number($pop) descending
@@ -72,7 +72,7 @@ return
         {
             title: "Countries and religions",
             description: "Find countries where Buddhism is practiced by more than 50% of the population.",
-            query: `for $country in doc("data/mondial.xml")//country
+            query: `for $country in doc("/db/apps/notebook/data/mondial.xml")//country
 let $buddhism := $country/religions[contains(., "Buddhist")]
 where number($buddhism/@percentage) > 50
 order by number($buddhism/@percentage) descending
@@ -117,16 +117,17 @@ return
 
     currentIndex: 0,
     container: null,
-    evalEndpoint: null,
+    apiBase: null,
     sourceEditor: null,
-    resultEditor: null,
 
     init(containerId) {
         this.container = document.getElementById(containerId);
         if (!this.container) return;
 
-        this.evalEndpoint = this.container.dataset.evalEndpoint ||
-            "/exist/apps/notebook/api/eval";
+        // Derive exist-api base from the current page context path
+        const m = window.location.pathname.match(/(.*\/exist)/);
+        const ctx = m ? m[1] : "/exist";
+        this.apiBase = this.container.dataset.apiBase || (ctx + "/apps/exist-api");
 
         this.render();
         this.initEditors();
@@ -167,7 +168,6 @@ return
 
     async initEditors() {
         await customElements.whenDefined("jinn-codemirror");
-
         this.sourceEditor = this.container.querySelector(".try-me-source");
     },
 
@@ -190,7 +190,7 @@ return
         const el = this.container;
 
         this.setEditorContent(this.sourceEditor, q.query);
-        // Restore plain <pre> for result area (may have been replaced by jinn-codemirror)
+        // Restore plain <pre> for result area
         const output = el.querySelector(".try-me-output");
         output.innerHTML = '<pre class="try-me-result">Click "Run" to execute the query.</pre>';
 
@@ -217,60 +217,56 @@ return
         const runBtn = this.container.querySelector(".try-me-run");
 
         if (this.sourceEditor) {
-            // Read back from editor in case user edited the query
             q.query = this.sourceEditor.content || q.query;
         }
 
-        // Ensure we have a <pre> for the result
         const output = this.container.querySelector(".try-me-output");
         output.innerHTML = '<pre class="try-me-result">Running...</pre>';
         const resultEl = output.querySelector(".try-me-result");
         runBtn.disabled = true;
 
         try {
-            const response = await fetch(this.evalEndpoint, {
+            const response = await fetch(`${this.apiBase}/api/eval`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
                 body: JSON.stringify({
                     query: q.query,
-                    serialization: "adaptive",
-                    baseUri: "/db/apps/notebook/content/getting-started"
+                    method: "adaptive",
+                    indent: "yes",
+                    "omit-xml-declaration": "yes",
+                    count: 50
                 })
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
+            const text = await response.text();
+
+            if (!response.ok || text.startsWith("Error:")) {
+                resultEl.textContent = text;
+                resultEl.className = "try-me-result try-me-error";
+                return;
             }
 
-            const data = await response.json();
+            // Detect content type for syntax highlighting
+            const isXml  = /^\s*</.test(text);
+            const isJson = /^\s*[\[{]/.test(text);
+            const mode   = isXml ? "xml" : isJson ? "json" : null;
 
-            if (data.error) {
-                resultEl.textContent = data.error;
-                resultEl.className = "try-me-result try-me-error";
+            if (mode && text.length < 50000) {
+                const cm = document.createElement("jinn-codemirror");
+                cm.className = "try-me-result-cm";
+                cm.setAttribute("mode", mode);
+                cm.setAttribute("code", text);
+                output.innerHTML = "";
+                output.appendChild(cm);
             } else {
-                const text = data.result || "";
-                // Detect content type for syntax highlighting
-                const isXml = /^\s*</.test(text);
-                const isJson = /^\s*[\[{]/.test(text);
-                const mode = isXml ? "xml" : isJson ? "json" : null;
-
-                if (mode && text.length < 50000) {
-                    // Create fresh jinn-codemirror with code attribute for highlighting
-                    const cm = document.createElement("jinn-codemirror");
-                    cm.className = "try-me-result-cm";
-                    cm.setAttribute("mode", mode);
-                    cm.setAttribute("code", text);
-                    output.innerHTML = "";
-                    output.appendChild(cm);
-                } else {
-                    resultEl.textContent = text;
-                    resultEl.className = "try-me-result try-me-success";
-                }
+                resultEl.textContent = text;
+                resultEl.className = "try-me-result try-me-success";
             }
         } catch (err) {
             resultEl.textContent =
                 "Could not connect to the query service.\n" +
-                "Make sure the Notebook app is installed.";
+                "Make sure exist-api is installed.";
             resultEl.className = "try-me-result try-me-error";
         } finally {
             runBtn.disabled = false;
