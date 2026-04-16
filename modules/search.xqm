@@ -144,11 +144,14 @@ declare function search:query($q as xs:string, $options as map(*)) as map(*) {
     )
 
     (: --- Step 4: Materialise result hits while Lucene context is intact ---
-     : Use app-filtered hits when app filter is active; all hits otherwise.
-     : ft:field() and ft:score() must be called before lazy eval drops the context. :)
-    let $result-hits := if ($app-filter and $app-filter != "") then $app-hits else $all-hits
+     : Always use $all-hits for materialisation so kwic:summarize() has the
+     : full Lucene match context (facet-filtered ft:query results lose it).
+     : App filtering is applied post-hoc using the materialised app field. :)
     let $all-maps :=
-        for $hit in $result-hits
+        for $hit in $all-hits
+        let $app := search:derive-app($hit)
+        (: Skip hits outside the requested app early to avoid unnecessary work :)
+        where not($app-filter and $app-filter != "") or $app = $app-filter
         return map {
             "doc-uri": document-uri(root($hit)),
             "score":   ft:score($hit),
@@ -166,7 +169,7 @@ declare function search:query($q as xs:string, $options as map(*)) as map(*) {
                                     $node
                         return serialize(element span { $nodes }, map { "method": "xml" })
                     else "",
-            "app":     search:derive-app($hit),
+            "app":     $app,
             "section": ft:field($hit, "site-section", "xs:string"),
             "url":     search:derive-url($hit)
         }
