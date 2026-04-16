@@ -34,7 +34,19 @@ let $current-user := request:get-attribute("org.exist.login.user")
 
 return
 
-if ($exist:path = "" or $exist:path = "/") then
+(: Redirect trailing slashes to canonical non-slash URL (except root) :)
+if ($exist:path != "/" and ends-with($exist:path, "/")
+    and not(starts-with($exist:path, "/resources/"))) then
+    let $clean := replace($exist:path, "/+$", "")
+    let $qs := request:get-query-string()
+    let $target := request:get-context-path() || $exist:prefix || $exist:controller || $clean
+        || (if ($qs) then "?" || $qs else "")
+    return
+        <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
+            <redirect url="{$target}"/>
+        </dispatch>
+
+else if ($exist:path = "" or $exist:path = "/") then
     <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
         <forward url="{$exist:controller}/modules/view.xq">
             <set-attribute name="template" value="templates/index.tpl"/>
@@ -66,7 +78,7 @@ else if (substring-after($exist:path, "/") = $local:page-slugs) then
 else if ($exist:path = "/login") then
     if (request:get-method() = "POST") then
         if ($current-user and not($current-user = ("guest", "nobody"))) then
-            let $redirect := request:get-parameter("redirect", request:get-context-path() || "/apps/exist-site-shell/")
+            let $redirect := request:get-parameter("redirect", request:get-context-path() || "/apps/exist-site-shell")
             return
                 <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
                     <redirect url="{$redirect}"/>
@@ -87,7 +99,7 @@ else if ($exist:path = "/login") then
 
 else if ($exist:path = "/logout") then
     let $_ := session:invalidate()
-    let $redirect := request:get-parameter("redirect", request:get-context-path() || "/apps/exist-site-shell/")
+    let $redirect := request:get-parameter("redirect", request:get-context-path() || "/apps/exist-site-shell")
     return
         <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
             <redirect url="{$redirect}"/>

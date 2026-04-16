@@ -11,7 +11,7 @@
 
     <header class="site-header">
         <nav class="site-nav" aria-label="Main navigation">
-            <a href="[[ $shell-base ]]/" class="site-logo">
+            <a href="[[ $shell-base ]]" class="site-logo">
                 <img src="[[ $site-logo ]]" alt="[[ $site-name ]]" height="32"/>
             </a>
 
