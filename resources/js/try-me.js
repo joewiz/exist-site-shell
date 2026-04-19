@@ -7,78 +7,266 @@
  */
 const TryMe = {
     queries: [
+        // --- Shakespeare: Full-Text Search ---
         {
-            title: "Hello XQuery",
-            description: "Your first query — construct XML with a timestamp.",
-            query: `let $msg := "Hello XQuery!"
+            title: "Simple full text query",
+            description: "Full text query on the Shakespeare plays — find speeches about love.",
+            query: `collection("/db/apps/notebook/data/getting-started/data/shakespeare")
+    //SPEECH[ft:query(., 'love')]`
+        },
+        {
+            title: "Full text phrase search",
+            description: "Find speeches by the witches containing the phrase \"fenny snake\".",
+            query: `collection("/db/apps/notebook/data/getting-started/data/shakespeare")
+    //SPEECH[ngram:contains(SPEAKER, 'witch')]
+            [ft:query(., '"fenny snake"')]`
+        },
+        {
+            title: "Ordered by score",
+            description: "Full text query with results ordered by relevance score.",
+            query: `for $m in collection("/db/apps/notebook/data/getting-started/data/shakespeare")
+    //SPEECH[ft:query(., "boil bubble")]
+let $score := ft:score($m)
+order by $score descending
 return
-    <greeting timestamp="{current-dateTime()}">
-        {$msg}
-    </greeting>`
+    <m score="{$score}">{$m}</m>`
         },
         {
-            title: "List the plays",
-            description: "Retrieve all play titles from the Shakespeare collection.",
-            query: `collection("/db/apps/notebook/data/shakespeare")/PLAY/TITLE/string()`
-        },
-        {
-            title: "Find characters",
-            description: "List all characters in Hamlet.",
-            query: `doc("/db/apps/notebook/data/shakespeare/hamlet.xml")//PERSONA/string()`
-        },
-        {
-            title: "Search for a word",
-            description: "Find speeches containing \"love\" across all plays.",
-            query: `for $speech in collection("/db/apps/notebook/data/shakespeare")//SPEECH
-where contains($speech/LINE, "love")
+            title: "Show context of a match",
+            description: "Group full text hits by play, act, and scene.",
+            query: `let $plays := collection("/db/apps/notebook/data/getting-started/data/shakespeare")
+let $query :=
+    <query>
+        <bool>
+            <term occur="must">blood</term>
+            <wildcard occur="should">murd*</wildcard>
+        </bool>
+    </query>
+for $speech in $plays//SPEECH[ft:query(., $query)]
+let $scene := $speech/ancestor::SCENE,
+    $act := $scene/ancestor::ACT,
+    $play := $scene/ancestor::PLAY
 return
-    <match play="{$speech/ancestor::PLAY/TITLE}"
-           speaker="{$speech/SPEAKER}">
-        {$speech/LINE[contains(., "love")][1]}
-    </match>`
+    <hit>
+        <play title="{$play/TITLE}">
+            <act title="{$act/TITLE}">
+                <scene title="{$scene/TITLE}">{$speech}</scene>
+            </act>
+        </play>
+    </hit>`
         },
         {
-            title: "Who speaks the most?",
-            description: "Top 10 speakers by number of speeches across all plays.",
-            query: `let $speeches := collection("/db/apps/notebook/data/shakespeare")//SPEECH
-for $speaker in distinct-values($speeches/SPEAKER)
-let $count := count($speeches[SPEAKER = $speaker])
-order by $count descending
+            title: "Group hits by play",
+            description: "Count full text matches per play for a wildcard query.",
+            query: `let $plays := collection("/db/apps/notebook/data/getting-started/data/shakespeare")
+let $speeches := $plays//SPEECH[ft:query(., "passion*")]
+for $play in $speeches/ancestor::PLAY
+group by $title := $play/TITLE/string()
 return
-    ($speaker || ": " || $count || " speeches")
-=> subsequence(1, 10)`
+    <play title="{$title}" hits="{count($speeches[ancestor::PLAY/TITLE = $title])}"/>`
         },
         {
-            title: "Group by speaker",
-            description: "Group all speeches mentioning \"king\" by who said them.",
-            query: `for $speech in collection("/db/apps/notebook/data/shakespeare")//SPEECH
-where contains($speech/LINE, "king")
-group by $speaker := $speech/SPEAKER/string()
-order by count($speech) descending
-return
-    <speaker name="{$speaker}" mentions="{count($speech)}"/>`
+            title: "Table of contents",
+            description: "Show table of contents for Macbeth with actors per scene.",
+            query: `<toc>{
+    for $act in collection("/db/apps/notebook/data/getting-started/data/shakespeare")
+        //PLAY[contains(TITLE, "Macbeth")]/ACT
+    return
+        <act>
+            {$act/TITLE}
+            {
+                for $scene in $act/SCENE return
+                    <scene>
+                        {$scene/TITLE}
+                        <actors>{
+                            for $speaker in distinct-values($scene//SPEAKER)
+                            order by $speaker
+                            return <actor>{$speaker}</actor>
+                        }</actors>
+                    </scene>
+            }
+        </act>
+}</toc>`
         },
         {
-            title: "World cities",
-            description: "Top 10 most populous cities in the Mondial geographic database.",
-            query: `for $city in doc("/db/apps/notebook/data/mondial.xml")//city
-let $pop := $city/population[last()]
-where exists($pop)
-order by number($pop) descending
+            title: "Keywords in Context",
+            description: "KWIC display for speeches containing \"hell\" in Shakespeare.",
+            query: `import module namespace kwic="http://exist-db.org/xquery/kwic";
+
+let $config := <config xmlns="" width="40" table="no"/>
+
+for $hit in collection("/db/apps/notebook/data/getting-started/data/shakespeare")
+    //SPEECH[ft:query(., "hell")]
+let $matches := kwic:get-matches($hit)
+for $ancestor in $matches/ancestor::SPEECH
 return
-    ($city/name/string() || ": " || format-number(number($pop), "#,###"))
-=> subsequence(1, 10)`
+    kwic:get-summary($ancestor, ($ancestor//exist:match)[1], $config)`
         },
         {
-            title: "Countries and religions",
-            description: "Find countries where Buddhism is practiced by more than 50% of the population.",
-            query: `for $country in doc("/db/apps/notebook/data/mondial.xml")//country
-let $buddhism := $country/religions[contains(., "Buddhist")]
-where number($buddhism/@percentage) > 50
-order by number($buddhism/@percentage) descending
+            title: "Highlighted search results",
+            description: "Full text hits rendered as HTML with highlighted matches.",
+            method: "html", "html-version": "5", render: true,
+            query: `let $plays := collection("/db/apps/notebook/data/getting-started/data/shakespeare")
+let $hits := $plays//SPEECH[ft:query(., "murder")]
 return
-    $country/name/string() || ": " || $buddhism/@percentage || "% Buddhist"`
+    <div class="search-hits">{
+        for $hit in subsequence($hits, 1, 10)
+        let $expanded := util:expand($hit)
+        return
+            <div class="hit">
+                <span class="speaker">{$hit/SPEAKER/string()}</span>
+                {
+                    for $line in $expanded/LINE
+                    return
+                        <span class="line">{
+                            for $node in $line/node()
+                            return
+                                if ($node instance of element(exist:match))
+                                then <mark>{$node/string()}</mark>
+                                else $node/string()
+                        }</span>
+                }
+            </div>
+    }</div>`
         },
+        // --- Semantic Search (Vector) ---
+        {
+            title: "Beyond keywords",
+            description: "Semantic search finds speeches about guilt and remorse — even when those exact words never appear.",
+            query: `import module namespace vector = "http://exist-db.org/xquery/vector";
+
+let $plays := collection("/db/apps/notebook/data/getting-started/data/shakespeare")
+
+(: Keyword search: only 2 speeches contain the word "remorse" :)
+let $keyword-hits := $plays//SPEECH[ft:query(., "remorse")]
+
+(: Semantic search: find speeches ABOUT remorse — guilt, regret, torment :)
+let $query-vec := vector:embed(
+    "guilt remorse conscience tormented by wrongdoing",
+    "all-MiniLM-L6-v2"
+)
+let $semantic-hits :=
+    for $hit in $plays//SPEECH[ft:query-field-vector("speech-vec", $query-vec, 5)]
+    let $score := ft:score($hit)
+    order by $score descending
+    return $hit
+
+return
+    <comparison>
+        <keyword-search term="remorse" matches="{count($keyword-hits)}"/>
+        <semantic-search matches="{count($semantic-hits)}">{
+            for $hit in $semantic-hits
+            let $score := ft:score($hit)
+            return
+                <match score="{round($score * 100) div 100}"
+                       play="{$hit/ancestor::PLAY/TITLE}"
+                       speaker="{$hit/SPEAKER[1]}">
+                    {substring(normalize-space(string-join($hit/LINE, " ")), 1, 120)}...
+                </match>
+        }</semantic-search>
+    </comparison>`
+        },
+        {
+            title: "Semantic discovery",
+            description: "Find the witches — without searching for 'witch'. Ask for 'supernatural dark prophecy' instead.",
+            method: "html", "html-version": "5", render: true,
+            query: `import module namespace vector = "http://exist-db.org/xquery/vector";
+
+let $plays := collection("/db/apps/notebook/data/getting-started/data/shakespeare")
+let $query-vec := vector:embed(
+    "supernatural dark prophecy fate doom",
+    "all-MiniLM-L6-v2"
+)
+return
+    <div class="search-hits">{
+        for $hit in $plays//SPEECH[ft:query-field-vector("speech-vec", $query-vec, 8)]
+        let $score := ft:score($hit)
+        order by $score descending
+        return
+            <div class="hit">
+                <span class="speaker">{$hit/ancestor::PLAY/TITLE/string()}
+                    — {$hit/SPEAKER[1]/string()}
+                    ({round($score * 100)}% match)</span>
+                {
+                    for $line in $hit/LINE
+                    return <span class="line">{$line/string()}</span>
+                }
+            </div>
+    }</div>`
+        },
+        // --- Mondial: Geographic Database ---
+        {
+            title: "Find a city",
+            description: "Search the Mondial geographic database for cities matching a pattern.",
+            query: `let $mondial := doc("/db/apps/notebook/data/getting-started/data/mondial.xml")
+for $city in $mondial//city
+where starts-with($city/name, "Dur")
+return
+    <result>
+        {$city/name}
+        <country>{$city/ancestor::country/name/string()}</country>
+        <province>{$city/ancestor::province/name/string()}</province>
+    </result>`
+        },
+        {
+            title: "Decreasing population",
+            description: "Show countries with negative population growth.",
+            query: `let $mondial := doc("/db/apps/notebook/data/getting-started/data/mondial.xml")
+for $c in $mondial//country
+where $c/population_growth < 0
+order by $c/name
+return
+    <country>
+        {$c/name, $c/population_growth}
+    </country>`
+        },
+        {
+            title: "Top cities by population",
+            description: "For each country, list the 3 cities with highest population.",
+            query: `let $mondial := doc("/db/apps/notebook/data/getting-started/data/mondial.xml")
+for $country in $mondial/mondial/country
+let $cities :=
+    (for $city in $country//city[population]
+    order by xs:integer($city/population[1]) descending
+    return $city)
+order by $country/name
+return
+    <country name="{$country/name}">
+    {
+        subsequence($cities, 1, 3)
+    }
+    </country>`
+        },
+        {
+            title: "Germany's organizations",
+            description: "List all organizations Germany is a member of.",
+            query: `let $mondial := doc("/db/apps/notebook/data/getting-started/data/mondial.xml")/mondial
+let $ids := tokenize($mondial/country[@car_code="D"]/@memberships)
+for $org in $mondial/organization[@id = $ids]
+order by $org/name
+return
+    $org/name`
+        },
+        {
+            title: "Germany's neighbors",
+            description: "Find all countries sharing a border with Germany.",
+            query: `let $mondial := doc("/db/apps/notebook/data/getting-started/data/mondial.xml")/mondial
+for $border in $mondial/country[@car_code="D"]/border
+return
+    $mondial/country[@car_code = $border/@country]/name`
+        },
+        {
+            title: "Roman Catholic countries",
+            description: "Show countries with the highest Roman Catholic population.",
+            query: `let $mondial := doc("/db/apps/notebook/data/getting-started/data/mondial.xml")
+for $c in $mondial//country
+let $catholic := $c/religions[contains(., "Roman Catholic")]
+where exists($catholic) and $catholic/@percentage > 50
+order by number($catholic/@percentage) descending
+return
+    $c/name/string() || ": " || $catholic/@percentage || "% Roman Catholic"`
+        },
+        // --- XQuery Features ---
         {
             title: "Higher-order functions",
             description: "Use filter, for-each, and fold-left — XQuery's functional toolkit.",
@@ -97,6 +285,7 @@ return
         {
             title: "Generate HTML",
             description: "Build a color-coded multiplication table entirely in XQuery.",
+            method: "html", "html-version": "5", render: true,
             query: `<table border="1" style="border-collapse:collapse">{
     for $row in 1 to 8
     return
@@ -112,6 +301,18 @@ return
                 </td>
         }</tr>
 }</table>`
+        },
+        {
+            title: "System info",
+            description: "Display eXist-db system properties.",
+            query: `<system>
+    <version>{util:system-property("product-version")}</version>
+    <build>{util:system-property("product-build")}</build>
+    <jvm>{
+        util:system-property("java.vendor"),
+        util:system-property("java.version")
+    }</jvm>
+</system>`
         }
     ],
 
@@ -124,8 +325,8 @@ return
         this.container = document.getElementById(containerId);
         if (!this.container) return;
 
-        // Derive exist-api base from the current page context path
-        const m = window.location.pathname.match(/(.*\/exist)/);
+        // Derive exist-api base from the servlet context path (/exist)
+        const m = window.location.pathname.match(/^(\/exist)\//);
         const ctx = m ? m[1] : "/exist";
         this.apiBase = this.container.dataset.apiBase || (ctx + "/apps/exist-api");
 
@@ -139,7 +340,7 @@ return
         this.container.innerHTML = `
             <div class="try-me">
                 <div class="try-me-header">
-                    <h3>Try XQuery</h3>
+                    <h3>Try eXist-db</h3>
                     <div class="try-me-nav">
                         <button class="try-me-prev" disabled>&larr; Prev</button>
                         <span class="try-me-counter">1 / ${this.queries.length}</span>
@@ -225,18 +426,25 @@ return
         const resultEl = output.querySelector(".try-me-result");
         runBtn.disabled = true;
 
+        // Serialization params — same model as notebook cells:
+        //   method:       "adaptive" (default), "xml", "json", "html", "text", etc.
+        //   html-version: "5" for HTML5 (used with method: "html")
+        //   indent:       "yes" (default) or "no"
+        //   render:       true to display HTML output directly instead of as source
+        // Any W3C serialization param can be set on the query object.
+        const reserved = new Set(["title", "description", "query", "render"]);
+        const serParams = { method: "adaptive", indent: "yes", "omit-xml-declaration": "yes", count: 50 };
+        for (const [k, v] of Object.entries(q)) {
+            if (!reserved.has(k)) serParams[k] = v;
+        }
+        serParams.query = q.query;
+
         try {
             const response = await fetch(`${this.apiBase}/api/eval`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "same-origin",
-                body: JSON.stringify({
-                    query: q.query,
-                    method: "adaptive",
-                    indent: "yes",
-                    "omit-xml-declaration": "yes",
-                    count: 50
-                })
+                body: JSON.stringify(serParams)
             });
 
             const text = await response.text();
@@ -247,7 +455,17 @@ return
                 return;
             }
 
-            // Detect content type for syntax highlighting
+            // Render as live HTML if the query declares render: true
+            if (q.render && text.length < 100000) {
+                const rendered = document.createElement("div");
+                rendered.className = "try-me-result try-me-html";
+                rendered.innerHTML = text;
+                output.innerHTML = "";
+                output.appendChild(rendered);
+                return;
+            }
+
+            // Syntax-highlighted source for XML/JSON/HTML
             const isXml  = /^\s*</.test(text);
             const isJson = /^\s*[\[{]/.test(text);
             const mode   = isXml ? "xml" : isJson ? "json" : null;

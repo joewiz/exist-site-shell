@@ -25,18 +25,16 @@
         </div>
     </section>
 
-    <div id="try-me" data-eval-endpoint="[[ request:get-context-path() ]]/apps/notebook/api/eval"></div>
-
     <section class="features">
         <h2>Why eXist-db?</h2>
         <div class="feature-grid">
             <div class="feature">
-                <h3>XQuery 3.1</h3>
-                <p>Full implementation of the W3C query language. Write queries, transforms, and complete applications in one language.</p>
+                <h3>XQuery 4.0</h3>
+                <p>Full implementation of the W3C query language for XML, JSON, and CSV. Write queries, transforms, and complete applications in one language.</p>
             </div>
             <div class="feature">
-                <h3>Full-Text Search</h3>
-                <p>Apache Lucene-powered indexing with facets, fields, and analyzers. Fast search across millions of documents.</p>
+                <h3>Full-Text and Semantic Search</h3>
+                <p>Apache Lucene-powered indexing with facets, fields, analyzers, and vector embeddings for semantic search. Fast search across millions of documents.</p>
             </div>
             <div class="feature">
                 <h3>Application Platform</h3>
@@ -55,6 +53,10 @@
                 <p>Download, unzip, run. No complex setup, no external dependencies. Java is all you need.</p>
             </div>
         </div>
+    </section>
+
+    <section class="try-exist">
+        <div id="try-me" data-eval-endpoint="[[ request:get-context-path() ]]/apps/notebook/api/eval"></div>
     </section>
 
     [% if count($testimonials?*) > 0 %]
