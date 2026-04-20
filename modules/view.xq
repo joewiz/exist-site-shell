@@ -75,9 +75,14 @@ let $context-path := request:get-context-path() || "/apps/exist-site-shell"
 let $q := request:get-parameter("q", "")
 let $app-filter := request:get-parameter("app", ())
 let $section-filter := request:get-parameter("section", ())
+let $search-start := xs:integer((request:get-parameter("start", "1"), "1")[1])
+let $search-limit := xs:integer((request:get-parameter("limit", "10"), "10")[1])
 let $search-response :=
     if ($q != "") then
-        search:query($q, map { "app": $app-filter, "section": $section-filter })
+        search:query($q, map {
+            "app": $app-filter, "section": $section-filter,
+            "start": $search-start, "limit": $search-limit
+        })
     else
         map { "results": array {}, "hier-facets": map {} }
 let $context := map {
@@ -99,7 +104,16 @@ let $context := map {
     "login-error": request:get-attribute("login-error"),
     "search-results": $search-response?results,
     "search-total": ($search-response?total, 0)[1],
+    "search-start": ($search-response?start, 1)[1],
+    "search-limit": ($search-response?limit, 10)[1],
     "search-hier-facets": $search-response?hier-facets,
+    "app-names": map {
+        "docs": "Documentation",
+        "blog": "Blog",
+        "notebook": "Notebook",
+        "dashboard": "Dashboard",
+        "exist-site-shell": "Community"
+    },
     "search-app-filter": ($app-filter, "")[1],
     "search-section-filter": ($section-filter, "")[1],
     "page-title": ($page?title, "")[1],

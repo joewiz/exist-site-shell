@@ -13,7 +13,8 @@ xquery version "3.1";
  :)
 module namespace search = "http://exist-db.org/site/search";
 
-import module namespace kwic = "http://exist-db.org/xquery/kwic";
+(: import module namespace kwic = "http://exist-db.org/xquery/kwic"; :)
+(: Replaced by ft:highlight-field-matches for performance :)
 
 declare namespace xqdoc = "http://www.xqdoc.org/1.0";
 
@@ -108,7 +109,8 @@ declare function search:query($q as xs:string, $options as map(*)) as map(*) {
     if ($q = "") then
         map { "results": array {}, "hier-facets": map {} }
     else
-    let $limit          := ($options?limit, 20)[1]
+    let $limit          := ($options?limit, 10)[1]
+    let $start          := max((($options?start, 1)[1], 1))
     let $app-filter     := $options?app
     let $section-filter := $options?section
     let $base-opts      := map { "fields": "site-content" }
@@ -144,8 +146,8 @@ declare function search:query($q as xs:string, $options as map(*)) as map(*) {
     )
 
     (: --- Step 4: Materialise result hits while Lucene context is intact ---
-     : Always use $all-hits for materialisation so kwic:summarize() has the
-     : full Lucene match context (facet-filtered ft:query results lose it).
+     : Always use $all-hits for materialisation so ft:highlight-field-matches()
+     : has the full Lucene match context.
      : App filtering is applied post-hoc using the materialised app field. :)
     let $all-maps :=
         for $hit in $all-hits
@@ -157,17 +159,26 @@ declare function search:query($q as xs:string, $options as map(*)) as map(*) {
             "score":   ft:score($hit),
             "title":   search:derive-title($hit),
             "snippet":
-                let $para := kwic:summarize($hit, <config width="40"/>)[1]
+                let $highlighted := ft:highlight-field-matches($hit, "site-content")
                 return
-                    if (exists($para)) then
-                        let $nodes :=
-                            for $node in $para/node()
-                            return
-                                if ($node instance of element() and $node/@class = "hi") then
-                                    element mark { string($node) }
-                                else
-                                    $node
-                        return serialize(element span { $nodes }, map { "method": "xml" })
+                    if (exists($highlighted)) then
+                        let $text := substring(string-join($highlighted//text(), " "), 1, 200)
+                        let $nodes := $highlighted//exist:match/..
+                        return
+                            if (exists($nodes)) then
+                                serialize(
+                                    element span {
+                                        for $node in ($nodes[1])/node()
+                                        return
+                                            if ($node instance of element(exist:match)) then
+                                                element mark { string($node) }
+                                            else
+                                                substring(string($node), 1, 80)
+                                    },
+                                    map { "method": "xml" }
+                                )
+                            else
+                                substring($text, 1, 200)
                     else "",
             "app":     $app,
             "section": ft:field($hit, "site-section", "xs:string"),
@@ -201,7 +212,9 @@ declare function search:query($q as xs:string, $options as map(*)) as map(*) {
     let $total := count($results)
     return map {
         "total":       $total,
-        "results":     array { subsequence($results, 1, $limit) },
+        "start":       $start,
+        "limit":       $limit,
+        "results":     array { subsequence($results, $start, $limit) },
         "hier-facets": $hier-facets
     }
 };

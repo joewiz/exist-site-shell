@@ -26,6 +26,23 @@ body {
     line-height: 1.5;
 }
 
+/* Headings — consistent blueish accent across all apps */
+h1, h2, h3 {
+    color: var(--site-nav-bg, #1a365d);
+}
+
+h1 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
+}
+
+h2 {
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin: 1.5rem 0 0.75rem;
+}
+
 /* Skip link */
 .skip-link {
     position: absolute;
