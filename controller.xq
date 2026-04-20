@@ -75,35 +75,38 @@ else if (substring-after($exist:path, "/") = $local:page-slugs) then
         </forward>
     </dispatch>
 
-else if ($exist:path = "/login") then
-    if (request:get-method() = "POST") then
-        if ($current-user and not($current-user = ("guest", "nobody"))) then
-            let $redirect := request:get-parameter("redirect", request:get-context-path() || "/apps/exist-site-shell")
-            return
-                <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
-                    <redirect url="{$redirect}"/>
-                </dispatch>
-        else
-            <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
-                <forward url="{$exist:controller}/modules/view.xq">
-                    <set-attribute name="template" value="templates/login.tpl"/>
-                    <set-attribute name="login-error" value="Invalid username or password"/>
-                </forward>
-            </dispatch>
-    else
-        <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
-            <forward url="{$exist:controller}/modules/view.xq">
-                <set-attribute name="template" value="templates/login.tpl"/>
-            </forward>
-        </dispatch>
+else if ($exist:path = "/login" and request:get-method() = "POST") then (
+    util:declare-option("exist:serialize", "method=json media-type=application/json"),
+    if ($current-user and not($current-user = ("guest", "nobody"))) then
+        <status xmlns:json="http://www.json.org">
+            <user>{$current-user}</user>
+            <isAdmin json:literal="true">{sm:is-dba($current-user)}</isAdmin>
+        </status>
+    else (
+        response:set-status-code(401),
+        <status>
+            <message>Login failed</message>
+        </status>
+    )
+)
 
-else if ($exist:path = "/logout") then
-    let $_ := session:invalidate()
+else if ($exist:path = "/login") then
+    <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
+        <forward url="{$exist:controller}/modules/view.xq">
+            <set-attribute name="template" value="templates/login.tpl"/>
+        </forward>
+    </dispatch>
+
+else if ($exist:path = "/logout") then (
+    response:set-cookie("org.exist.login", "deleted", xs:dayTimeDuration("-P1D"), false(), (),
+        request:get-context-path()),
+    session:invalidate(),
     let $redirect := request:get-parameter("redirect", request:get-context-path() || "/apps/exist-site-shell")
     return
         <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
             <redirect url="{$redirect}"/>
         </dispatch>
+)
 
 else if (starts-with($exist:path, "/resources/")) then
     <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
