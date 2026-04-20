@@ -9,7 +9,9 @@
     "deploy": "gulp install",
     "develop": "gulp",
     "setup": "node setup.js",
-    "test": "xst execute -f test/xqs/run-site-config-tests.xq"
+    "test": "xst execute -f test/xqs/run-site-config-tests.xq",
+    "test:tryit": "xst execute -f test/xqs/run-try-it-tests.xq",
+    "test:all": "npm test && npm run test:tryit"
   },
   "repository": {
     "type": "git",
