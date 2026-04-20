@@ -198,7 +198,9 @@ declare function search:query($q as xs:string, $options as map(*)) as map(*) {
             "url":     $m?url,
             "score":   $m?score
         }
+    let $total := count($results)
     return map {
+        "total":       $total,
         "results":     array { subsequence($results, 1, $limit) },
         "hier-facets": $hier-facets
     }

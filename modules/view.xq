@@ -98,6 +98,7 @@ let $context := map {
     "q": $q,
     "login-error": request:get-attribute("login-error"),
     "search-results": $search-response?results,
+    "search-total": ($search-response?total, 0)[1],
     "search-hier-facets": $search-response?hier-facets,
     "search-app-filter": ($app-filter, "")[1],
     "search-section-filter": ($section-filter, "")[1],

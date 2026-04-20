@@ -21,7 +21,7 @@
     [% if $q != '' %]
     <p class="search-summary">
         Results for "<strong>[[ $q ]]</strong>"
-        ([[ count($search-results?*) ]] found)
+        ([[ $search-total ]] found[% if $search-total > count($search-results?*) %], showing [[ count($search-results?*) ]][% endif %])
     </p>
 
     <div class="search-layout">
