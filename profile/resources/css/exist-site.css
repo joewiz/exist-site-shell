@@ -604,7 +604,8 @@ h2 {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    padding: 0.5rem 1rem;
+    padding: 0;
+    margin: 1rem 0;
     font-size: 0.85rem;
     color: #888;
 }
@@ -621,6 +622,42 @@ h2 {
 .breadcrumb-sep {
     color: #ccc;
     margin: 0 0.125rem;
+}
+
+/* App search form — shared search bar for all apps */
+
+.app-search {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.app-search input[type="search"] {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.app-search input[type="search"]:focus {
+    outline: none;
+    border-color: #1565c0;
+    box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.15);
+}
+
+.app-search button {
+    padding: 0.5rem 1rem;
+    background: #3498db;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.app-search button:hover {
+    background: #2980b9;
 }
 
 /* Error page */
