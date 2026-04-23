@@ -4,6 +4,7 @@
     --site-bg: #ffffff;
     --site-text: #333333;
     --site-accent: #3498db;
+    --site-accent-hover: #2980b9;
     --site-nav-bg: #1a365d;
     --site-nav-text: #bee3f8;
     --site-footer-bg: #f5f5f5;
@@ -26,9 +27,33 @@ body {
     line-height: 1.5;
 }
 
+/* Links — light blue body links, dark blue heading links */
+a {
+    color: var(--site-accent, #3498db);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--site-accent-hover, #2980b9);
+    text-decoration: underline;
+}
+
 /* Headings — consistent blueish accent across all apps */
 h1, h2, h3 {
     color: var(--site-nav-bg, #1a365d);
+}
+
+/* Links inside headings: dark blue, light blue on hover */
+h1 a, h2 a, h3 a,
+dt a {
+    color: var(--site-nav-bg, #1a365d);
+    text-decoration: none;
+}
+
+h1 a:hover, h2 a:hover, h3 a:hover,
+dt a:hover {
+    color: var(--site-accent, #3498db);
+    text-decoration: underline;
 }
 
 h1 {
