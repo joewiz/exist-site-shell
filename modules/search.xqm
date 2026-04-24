@@ -3,9 +3,11 @@ xquery version "3.1";
 (:~
  : Sitewide search module.
  :
- : Queries full-text indexes across all apps in /db/apps.
- : Uses specific element qnames (topic, xqdoc:xqdoc, notebook, post) so that
- : ft:field() and ft:facets() work correctly in eXist-db.
+ : Queries full-text indexes across all apps in /db/apps using the
+ : site-search convention: each registered app may provide a module at
+ : modules/site-search-config.xqm that exposes site-search:hits($q, $opts)
+ : returning elements with site-* Lucene fields.  Apps without the config
+ : module fall back to legacy hardcoded qname queries.
  :
  : Facet counts come from ft:facets() — Lucene-native, scales regardless of
  : result-set size. Filtering uses the "facets" option in ft:query() so
@@ -13,10 +15,12 @@ xquery version "3.1";
  :)
 module namespace search = "http://exist-db.org/site/search";
 
-(: import module namespace kwic = "http://exist-db.org/xquery/kwic"; :)
-(: Replaced by ft:highlight-field-matches for performance :)
-
+declare namespace n = "http://exist-db.org/site/nav";
 declare namespace xqdoc = "http://www.xqdoc.org/1.0";
+
+(:~ Path to the app registry. :)
+declare %private variable $search:REGISTRY-PATH :=
+    "/db/apps/exist-site-shell/data/app-registry.xml";
 
 (:~
  : Derive a display title from a search hit.
@@ -79,17 +83,59 @@ declare %private function search:derive-app($hit as node()) as xs:string {
 };
 
 (:~
- : Return elements matching a full-text query using supplied options.
+ : Return elements matching a full-text query across all registered apps.
  :
- : Queries all known indexed root element types by name so that ft:field()
- : and ft:facets() work correctly — eXist-db requires specific qname paths.
+ : For each installed app in the registry, checks for a site-search config
+ : module (modules/site-search-config.xqm).  If present, delegates to the
+ : app's site-search:hits() function.  Otherwise falls back to legacy
+ : hardcoded qname queries.
  :)
-declare %private function search:hits($collection as xs:string, $q as xs:string, $opts as map(*)) as element()* {
-    (
-        collection($collection)/topic[ft:query(., $q, $opts)],
-        collection($collection)/xqdoc:xqdoc[ft:query(., $q, $opts)],
-        collection($collection)/notebook[ft:query(., $q, $opts)],
-        collection($collection)/post[ft:query(., $q, $opts)]
+declare %private function search:hits($q as xs:string, $opts as map(*)) as element()* {
+    for $entry in doc($search:REGISTRY-PATH)/n:app-registry/n:app
+    let $abbrev := $entry/@abbrev/string()
+    where xmldb:collection-available("/db/apps/" || $abbrev)
+    return search:app-hits($abbrev, $q, $opts)
+};
+
+(:~
+ : Query a single app for search hits.
+ :
+ : Tries the site-search convention first; falls back to legacy qnames.
+ :)
+declare %private function search:app-hits(
+    $abbrev as xs:string, $q as xs:string, $opts as map(*)
+) as element()* {
+    let $config-path := "/db/apps/" || $abbrev || "/modules/site-search-config.xqm"
+    return
+        if (util:binary-doc-available($config-path)) then
+            try {
+                util:eval(
+                    'import module namespace site-search = "http://exist-db.org/site/search-config"'
+                    || '    at "' || $config-path || '";'
+                    || ' site-search:hits($q, $opts)',
+                    false(),
+                    (xs:QName("q"), $q, xs:QName("opts"), $opts)
+                )
+            } catch * {
+                util:log("WARN", ("site-search: error from ", $abbrev, ": ", $err:description)),
+                search:legacy-hits($abbrev, $q, $opts)
+            }
+        else
+            search:legacy-hits($abbrev, $q, $opts)
+};
+
+(:~
+ : Legacy fallback: query known element types in an app's collection.
+ :)
+declare %private function search:legacy-hits(
+    $abbrev as xs:string, $q as xs:string, $opts as map(*)
+) as element()* {
+    let $root := "/db/apps/" || $abbrev
+    return (
+        collection($root)//topic[ft:query(., $q, $opts)],
+        collection($root)/xqdoc:xqdoc[ft:query(., $q, $opts)],
+        collection($root)//notebook[ft:query(., $q, $opts)],
+        collection($root)//post[ft:query(., $q, $opts)]
     )
 };
 
@@ -118,14 +164,14 @@ declare function search:query($q as xs:string, $options as map(*)) as map(*) {
     (: --- Step 1: Unfiltered query for app-level facet counts ---
      : ft:facets() must be called while the Lucene context is intact,
      : immediately on the sequence returned by ft:query(). :)
-    let $all-hits  := search:hits("/db/apps", $q, $base-opts)
+    let $all-hits  := search:hits($q, $base-opts)
     let $app-facets := ft:facets($all-hits, "site-app", ())
 
     (: --- Step 2: App-filtered query for section facet counts ---
      : Pass app filter via Lucene "facets" option — not post-hoc XQuery. :)
     let $app-hits :=
         if ($app-filter and $app-filter != "") then
-            search:hits("/db/apps", $q,
+            search:hits($q,
                 map:merge(($base-opts, map { "facets": map { "site-app": $app-filter } })))
         else ()
     let $section-facets :=
@@ -185,13 +231,14 @@ declare function search:query($q as xs:string, $options as map(*)) as map(*) {
             "url":     search:derive-url($hit)
         }
 
-    (: --- Step 5: Deduplicate by doc-uri, keeping highest-scoring hit ---
-     : Multiple qname queries can match the same document. :)
+    (: --- Step 5: Deduplicate by URL, keeping highest-scoring hit ---
+     : Keyed by URL (not doc-uri) so that module-level and function-level
+     : hits from the same document survive as separate results. :)
     let $deduped := fold-left($all-maps, map {}, function($acc, $m) {
-        let $uri := $m?doc-uri
+        let $key := $m?url
         return
-            if (map:contains($acc, $uri) and $acc($uri)?score >= $m?score) then $acc
-            else map:put($acc, $uri, $m)
+            if (map:contains($acc, $key) and $acc($key)?score >= $m?score) then $acc
+            else map:put($acc, $key, $m)
     })
 
     (: --- Step 6: Build ordered result list ---
